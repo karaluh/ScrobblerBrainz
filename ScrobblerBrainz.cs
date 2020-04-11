@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.IO;
 
 namespace MusicBeePlugin
 {
@@ -10,6 +11,10 @@ namespace MusicBeePlugin
     {
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
+
+        public TextBox userToken; // TextBox where the ListenBrainz user token is stored.
+        public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
+        public string settingsFile = "usertoken"; // Plugin settings file.
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -27,7 +32,7 @@ namespace MusicBeePlugin
             about.MinInterfaceVersion = 30;
             about.MinApiRevision = 40;
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
-            about.ConfigurationPanelHeight = 0;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
+            about.ConfigurationPanelHeight = 30;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
             return about;
         }
@@ -45,10 +50,11 @@ namespace MusicBeePlugin
                 Label prompt = new Label();
                 prompt.AutoSize = true;
                 prompt.Location = new Point(0, 0);
-                prompt.Text = "prompt:";
-                TextBox textBox = new TextBox();
-                textBox.Bounds = new Rectangle(60, 0, 100, textBox.Height);
-                configPanel.Controls.AddRange(new Control[] { prompt, textBox });
+                prompt.Text = "ListenBrainz User token:";
+                userToken = new TextBox();
+                userToken.Text = File.ReadAllText(String.Concat(dataPath, settingsSubfolder, settingsFile));  // Read the user token from file.
+                userToken.Bounds = new Rectangle(135, 0, 100, userToken.Height);
+                configPanel.Controls.AddRange(new Control[] { prompt, userToken });
             }
             return false;
         }
@@ -59,6 +65,8 @@ namespace MusicBeePlugin
         {
             // save any persistent settings in a sub-folder of this path
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
+            Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
+            File.WriteAllText(String.Concat(dataPath, settingsSubfolder, settingsFile), userToken.Text); // Save the user token to a file.
         }
 
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
