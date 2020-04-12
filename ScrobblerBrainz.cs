@@ -52,7 +52,14 @@ namespace MusicBeePlugin
                 prompt.Location = new Point(0, 0);
                 prompt.Text = "ListenBrainz User token:";
                 userToken = new TextBox();
-                userToken.Text = File.ReadAllText(String.Concat(dataPath, settingsSubfolder, settingsFile));  // Read the user token from file.
+                try
+                {
+                    userToken.Text = File.ReadAllText(String.Concat(dataPath, settingsSubfolder, settingsFile));  // Read the user token from file.
+                }
+                catch(FileNotFoundException)
+                {
+                    // No need to do anything, it means the file with the user token isn't created yet.
+                }
                 userToken.Bounds = new Rectangle(135, 0, 100, userToken.Height);
                 configPanel.Controls.AddRange(new Control[] { prompt, userToken });
             }
