@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 
 namespace MusicBeePlugin
 {
@@ -37,7 +38,7 @@ namespace MusicBeePlugin
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
             about.ConfigurationPanelHeight = 30;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
-            try // Read the user token from file if it exists.
+            try // Read the user token from a file.
             {
                 userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));  // Read the user token from file.
             }
@@ -117,9 +118,11 @@ namespace MusicBeePlugin
                     if (!String.IsNullOrEmpty(userToken))
                     {
                         HttpClient httpClient = new HttpClient();
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);
-                        var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent("test"));
-                        MessageBox.Show(submitListenResponse.Result.StatusCode.ToString());
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);  // Set the authorization headers.
+                        String submitListenContent = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": 1443521965,\"track_metadata\": {\"artist_name\": \"test\", \"track_name\": \"test\"} } ] }";
+                        var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenContent, Encoding.UTF8, "application/json"));
+                        MessageBox.Show(submitListenResponse.Result.Content.ReadAsStringAsync().Result);
+                        //MessageBox.Show(new StringContent(submitListenContent, Encoding.UTF8, "application/json").ReadAsStringAsync().Result);
                     }
                     break;
             }
