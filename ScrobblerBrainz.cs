@@ -15,6 +15,7 @@ namespace MusicBeePlugin
         private PluginInfo about = new PluginInfo();
 
         public string userToken; // ListenBrainz user token.
+        public TextBox userTokenTextBox = new TextBox();
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
         public string settingsFile = "usertoken"; // Plugin settings file.
 
@@ -62,10 +63,9 @@ namespace MusicBeePlugin
                 prompt.AutoSize = true;
                 prompt.Location = new Point(0, 0);
                 prompt.Text = "ListenBrainz User token:";
-                TextBox textBox = new TextBox();
-                textBox.Bounds = new Rectangle(135, 0, 100, textBox.Height);
-                textBox.Text = userToken;
-                configPanel.Controls.AddRange(new Control[] { prompt, textBox });
+                userTokenTextBox.Bounds = new Rectangle(135, 0, 100, userTokenTextBox.Height);
+                userTokenTextBox.Text = userToken;
+                configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox });
             }
             return false;
         }
@@ -77,6 +77,7 @@ namespace MusicBeePlugin
             // save any persistent settings in a sub-folder of this path
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
             Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
+            userToken = userTokenTextBox.Text;
             File.WriteAllText(String.Concat(dataPath, settingsSubfolder, settingsFile), userToken); // Save the user token to a file.
         }
 
