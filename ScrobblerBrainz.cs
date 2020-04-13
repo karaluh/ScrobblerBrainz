@@ -118,7 +118,7 @@ namespace MusicBeePlugin
                         HttpClient httpClient = new HttpClient();
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(userToken);
                         var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent("test"));
-                        MessageBox.Show(submitListenResponse.ToString());
+                        MessageBox.Show(submitListenResponse.Result.StatusCode.ToString());
                     }
                     break;
             }
