@@ -4,6 +4,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace MusicBeePlugin
 {
@@ -12,7 +14,7 @@ namespace MusicBeePlugin
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
 
-        public TextBox userToken; // TextBox where the ListenBrainz user token is stored.
+        public string userToken; // ListenBrainz user token.
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
         public string settingsFile = "usertoken"; // Plugin settings file.
 
@@ -34,6 +36,15 @@ namespace MusicBeePlugin
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
             about.ConfigurationPanelHeight = 30;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
+            try // Read the user token from file if it exists.
+            {
+                userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));  // Read the user token from file.
+            }
+            catch (FileNotFoundException)
+            {
+                // No need to do anything, it means the file with the user token isn't created yet.
+            }
+
             return about;
         }
 
@@ -51,17 +62,10 @@ namespace MusicBeePlugin
                 prompt.AutoSize = true;
                 prompt.Location = new Point(0, 0);
                 prompt.Text = "ListenBrainz User token:";
-                userToken = new TextBox();
-                try
-                {
-                    userToken.Text = File.ReadAllText(String.Concat(dataPath, settingsSubfolder, settingsFile));  // Read the user token from file.
-                }
-                catch(FileNotFoundException)
-                {
-                    // No need to do anything, it means the file with the user token isn't created yet.
-                }
-                userToken.Bounds = new Rectangle(135, 0, 100, userToken.Height);
-                configPanel.Controls.AddRange(new Control[] { prompt, userToken });
+                TextBox textBox = new TextBox();
+                textBox.Bounds = new Rectangle(135, 0, 100, textBox.Height);
+                textBox.Text = userToken;
+                configPanel.Controls.AddRange(new Control[] { prompt, textBox });
             }
             return false;
         }
@@ -73,7 +77,7 @@ namespace MusicBeePlugin
             // save any persistent settings in a sub-folder of this path
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
             Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
-            File.WriteAllText(String.Concat(dataPath, settingsSubfolder, settingsFile), userToken.Text); // Save the user token to a file.
+            File.WriteAllText(String.Concat(dataPath, settingsSubfolder, settingsFile), userToken); // Save the user token to a file.
         }
 
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
@@ -84,6 +88,7 @@ namespace MusicBeePlugin
         // uninstall this plugin - clean up any persisted files
         public void Uninstall()
         {
+            // Nothing is being done here because the settings are left after uninstalation by design.
         }
 
         // receive event notifications from MusicBee
@@ -106,6 +111,15 @@ namespace MusicBeePlugin
                 case NotificationType.TrackChanged:
                     string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
                     // ...
+                    break;
+                case NotificationType.PlayCountersChanged:
+                    if (!String.IsNullOrEmpty(userToken))
+                    {
+                        HttpClient httpClient = new HttpClient();
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(userToken);
+                        var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent("test"));
+                        MessageBox.Show(submitListenResponse.ToString());
+                    }
                     break;
             }
         }
