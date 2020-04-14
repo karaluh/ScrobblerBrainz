@@ -19,6 +19,7 @@ namespace MusicBeePlugin
         public TextBox userTokenTextBox = new TextBox();
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
         public string settingsFile = "usertoken"; // Plugin settings file.
+        public string artist = "";
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -97,30 +98,34 @@ namespace MusicBeePlugin
         // you need to set about.ReceiveNotificationFlags = PlayerEvents to receive all notifications, and not just the startup event
         public void ReceiveNotification(string sourceFileUrl, NotificationType type)
         {
+            
             // perform some action depending on the notification type
             switch (type)
             {
                 case NotificationType.PluginStartup:
                     // perform startup initialisation
-                    switch (mbApiInterface.Player_GetPlayState())
-                    {
-                        case PlayState.Playing:
-                        case PlayState.Paused:
-                            // ...
-                            break;
-                    }
+                    artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
+                    MessageBox.Show(artist);
+                    //switch (mbApiInterface.Player_GetPlayState())
+                    //{
+                    //    case PlayState.Playing:
+                    //    case PlayState.Paused:
+                    //        artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
+                    //        break;
+                    //}
                     break;
                 case NotificationType.TrackChanged:
-                    string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
+                    artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
                     // ...
                     break;
                 case NotificationType.PlayCountersChanged:
                     if (!String.IsNullOrEmpty(userToken))
                     {
+                        //MessageBox.Show(artist);
                         HttpClient httpClient = new HttpClient();
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);  // Set the authorization headers.
-                        String submitListenContent = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": 1443521965,\"track_metadata\": {\"artist_name\": \"test\", \"track_name\": \"test\"} } ] }";
-                        var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenContent, Encoding.UTF8, "application/json"));
+                        String submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": 1443521965,\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"test\"} } ] }";
+                        var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
                         MessageBox.Show(submitListenResponse.Result.Content.ReadAsStringAsync().Result);
                         //MessageBox.Show(new StringContent(submitListenContent, Encoding.UTF8, "application/json").ReadAsStringAsync().Result);
                     }
