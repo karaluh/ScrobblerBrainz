@@ -24,6 +24,7 @@ namespace MusicBeePlugin
         TimeSpan timestamp;
         public string artist = "";
         public string track = "";
+        public string release = "";
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -110,8 +111,8 @@ namespace MusicBeePlugin
                     // perform startup initialisation
                     artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
                     track = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
-                    //string aaa = Convert.ToString((int)timestamp.TotalSeconds);
-                    //MessageBox.Show(aaa);
+                    release = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
+                    
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
                     //    case PlayState.Playing:
@@ -123,6 +124,7 @@ namespace MusicBeePlugin
                 case NotificationType.TrackChanged:
                     artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
                     track = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
+                    release = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
                     break;
                 case NotificationType.PlayCountersChanged:
                     if (!String.IsNullOrEmpty(userToken))
@@ -132,7 +134,7 @@ namespace MusicBeePlugin
                         // Prepare and post the scrobble.
                         HttpClient httpClient = new HttpClient();
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);  // Set the authorization headers.
-                        string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": " + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"" + track + "\"} } ] }";
+                        string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": " + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release + "\"} } ] }";
                         var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
                         //MessageBox.Show(submitListenResponse.Result.Content.ReadAsStringAsync().Result);
                         //MessageBox.Show(new StringContent(submitListenContent, Encoding.UTF8, "application/json").ReadAsStringAsync().Result);
