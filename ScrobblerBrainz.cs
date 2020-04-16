@@ -19,7 +19,11 @@ namespace MusicBeePlugin
         public TextBox userTokenTextBox = new TextBox();
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
         public string settingsFile = "usertoken"; // Plugin settings file.
+
+        // Scrobble metadata
+        TimeSpan timestamp;
         public string artist = "";
+        public string track = "";
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -105,7 +109,9 @@ namespace MusicBeePlugin
                 case NotificationType.PluginStartup:
                     // perform startup initialisation
                     artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
-                    MessageBox.Show(artist);
+                    track = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
+                    //string aaa = Convert.ToString((int)timestamp.TotalSeconds);
+                    //MessageBox.Show(aaa);
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
                     //    case PlayState.Playing:
@@ -116,17 +122,19 @@ namespace MusicBeePlugin
                     break;
                 case NotificationType.TrackChanged:
                     artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
-                    // ...
+                    track = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
                     break;
                 case NotificationType.PlayCountersChanged:
                     if (!String.IsNullOrEmpty(userToken))
                     {
-                        //MessageBox.Show(artist);
+                        timestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
+
+                        // Prepare and post the scrobble.
                         HttpClient httpClient = new HttpClient();
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);  // Set the authorization headers.
-                        String submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": 1443521965,\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"test\"} } ] }";
+                        string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": " + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"" + track + "\"} } ] }";
                         var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
-                        MessageBox.Show(submitListenResponse.Result.Content.ReadAsStringAsync().Result);
+                        //MessageBox.Show(submitListenResponse.Result.Content.ReadAsStringAsync().Result);
                         //MessageBox.Show(new StringContent(submitListenContent, Encoding.UTF8, "application/json").ReadAsStringAsync().Result);
                     }
                     break;
