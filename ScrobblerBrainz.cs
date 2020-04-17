@@ -131,14 +131,14 @@ namespace MusicBeePlugin
                     release = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
                     break;
                 case NotificationType.PlayCountersChanged:
-                    if (!String.IsNullOrEmpty(userToken))
+                    if (!String.IsNullOrEmpty(userToken)) // If the user token is configured.
                     {
                         timestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
 
                         // Prepare and post the scrobble.
                         HttpClient httpClient = new HttpClient();
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);  // Set the authorization headers.
-                        string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": " + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release + "\"} } ] }";
+                        string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": " + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }";
                         var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
                         //MessageBox.Show(submitListenResponse.Result.Content.ReadAsStringAsync().Result);
                         //MessageBox.Show(new StringContent(submitListenContent, Encoding.UTF8, "application/json").ReadAsStringAsync().Result);
