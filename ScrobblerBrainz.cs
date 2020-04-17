@@ -52,6 +52,10 @@ namespace MusicBeePlugin
             {
                 // No need to do anything, it means the file with the user token isn't created yet.
             }
+            catch (DirectoryNotFoundException)
+            {
+                // No need to do anything, it means the directory with the user token isn't created yet.
+            }
 
             return about;
         }
