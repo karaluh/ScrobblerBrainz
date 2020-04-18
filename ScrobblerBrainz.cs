@@ -16,7 +16,7 @@ namespace MusicBeePlugin
         private PluginInfo about = new PluginInfo();
 
         public string userToken; // ListenBrainz user token.
-        public TextBox userTokenTextBox = new TextBox();
+        public TextBox userTokenTextBox;
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
         public string settingsFile = "usertoken"; // Plugin settings file.
 
@@ -74,6 +74,7 @@ namespace MusicBeePlugin
                 prompt.AutoSize = true;
                 prompt.Location = new Point(0, 0);
                 prompt.Text = "ListenBrainz User token:";
+                userTokenTextBox = new TextBox();
                 userTokenTextBox.Bounds = new Rectangle(135, 0, 100, userTokenTextBox.Height);
                 userTokenTextBox.Text = userToken;
                 configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox });
@@ -143,7 +144,7 @@ namespace MusicBeePlugin
                         try
                         {
                             var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
-                            if (!submitListenResponse.Result.IsSuccessStatusCode)
+                            if (!submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble fails display the cause to the user.
                             {
                                 MessageBox.Show("ScrobblerBrainz error: " + submitListenResponse.Result.Content.ReadAsStringAsync().Result);
                             }
@@ -152,9 +153,6 @@ namespace MusicBeePlugin
                         {
                             // Nothing to do here for now, implement offline scrobbling in the future.
                         }
-                        
-                        //MessageBox.Show(submitListenResponse.Result.Content.ReadAsStringAsync().Result);
-                        //MessageBox.Show(new StringContent(submitListenContent, Encoding.UTF8, "application/json").ReadAsStringAsync().Result);
                     }
                     break;
             }
