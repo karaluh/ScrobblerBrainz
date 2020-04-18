@@ -9,3 +9,6 @@ A MusicBee plug-in to scrobble tracks to ListenBrainz.
 1. No playcount sync.
 1. No "now listening".
 1. Or any other feature the last.fm scrobbler has.
+
+# Download
+https://drive.google.com/open?id=12dWSnoFBPjrp9jsBl19CXC6UJN9k6G-r
