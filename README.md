@@ -19,6 +19,6 @@ https://drive.google.com/open?id=12dWSnoFBPjrp9jsBl19CXC6UJN9k6G-r
 1. Get ListenBrainz account https://listenbrainz.org/login/
 1. Download the plugin to *Plugins* folder in your MusicBee instalation folder
 1. Get your ListenBrainz user token https://listenbrainz.org/profile/
-1. Start MusicBee and enable the plugin in *Edit->Edit preferences->Plugins
+1. Start MusicBee and enable the plugin in *Edit->Edit preferences->Plugins*
 1. Input your user token into the toolbox
 1. Save the settings and you're good to go
