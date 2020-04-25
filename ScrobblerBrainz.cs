@@ -140,18 +140,25 @@ namespace MusicBeePlugin
                         HttpClient httpClient = new HttpClient();
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);  // Set the authorization headers.
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": " + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }";
-                        
-                        try
+
+                        for (int i = 0; i < 5; i++) // In case of temporary errors do up to 5 retries.
                         {
-                            var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
-                            if (!submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble fails display the cause to the user.
+                            try
                             {
-                                MessageBox.Show("ScrobblerBrainz error: " + submitListenResponse.Result.Content.ReadAsStringAsync().Result);
+                                var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
+                                if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, exit the loop.
+                                {
+                                    break;
+                                }
+                                else // If the scrobble fails display the cause to the user.
+                                {
+                                    MessageBox.Show("ScrobblerBrainz error: " + submitListenResponse.Result.Content.ReadAsStringAsync().Result);
+                                }
                             }
-                        }
-                        catch (HttpRequestException)
-                        {
-                            // Nothing to do here for now, implement offline scrobbling in the future.
+                            catch (HttpRequestException)
+                            {
+                                // Nothing to do here for now, implement offline scrobbling in the future.
+                            }
                         }
                     }
                     break;
