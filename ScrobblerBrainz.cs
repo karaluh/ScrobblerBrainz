@@ -132,11 +132,13 @@ namespace MusicBeePlugin
                     //        break;
                     //}
                     break;
+
                 case NotificationType.TrackChanged:
                     artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
                     track = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
                     release = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
                     break;
+
                 case NotificationType.PlayCountersChanged:
                     if (!String.IsNullOrEmpty(userToken)) // If the user token is configured.
                     {
@@ -158,7 +160,11 @@ namespace MusicBeePlugin
                                 }
                                 else // If the scrobble fails display the cause to the user.
                                 {
-                                    MessageBox.Show("ScrobblerBrainz error: " + submitListenResponse.Result.Content.ReadAsStringAsync().Result);
+                                    // Log the timestamp and the error message in the error file.
+                                    string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
+                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), DateTime.Now.ToString() + "\n" +
+                                                                                                                submitListenResponse.Result.Content.ReadAsStringAsync().Result + "\n");
+                                    // MessageBox.Show("ScrobblerBrainz error: " + submitListenResponse.Result.Content.ReadAsStringAsync().Result);
                                 }
                             }
                             catch (HttpRequestException)
