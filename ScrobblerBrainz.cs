@@ -15,12 +15,15 @@ namespace MusicBeePlugin
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
 
-        public string userToken; // ListenBrainz user token.
+        // ListenBrainz user token.
+        public string userToken;
         public TextBox userTokenTextBox;
+
+        // Settings:
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
         public string settingsFile = "usertoken"; // Plugin settings file.
 
-        // Scrobble metadata
+        // Scrobble metadata:
         TimeSpan timestamp;
         public string artist = "";
         public string track = "";
@@ -36,9 +39,12 @@ namespace MusicBeePlugin
             about.Author = "karaluh";
             about.TargetApplication = "";   //  the name of a Plugin Storage device or panel header for a dockable panel
             about.Type = PluginType.General;
-            about.VersionMajor = 0;  // your plugin version
+
+            // Plugin version:
+            about.VersionMajor = 0;
             about.VersionMinor = 0;
             about.Revision = 1;
+
             about.MinInterfaceVersion = 30;
             about.MinApiRevision = 40;
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
@@ -46,7 +52,7 @@ namespace MusicBeePlugin
 
             try // Read the user token from a file.
             {
-                userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));  // Read the user token from file.
+                userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
             }
             catch (FileNotFoundException)
             {
