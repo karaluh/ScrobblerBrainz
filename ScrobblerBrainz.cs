@@ -177,6 +177,12 @@ namespace MusicBeePlugin
             }
         }
 
+        public void SaveScrobble()
+        {
+            // Create the folder where offline scrobbles will be stored.
+            string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
+            Directory.CreateDirectory(String.Concat(dataPath, "scrobbles"));
+        }
               
         // return an array of lyric or artwork provider names this plugin supports
         // the providers will be iterated through one by one and passed to the RetrieveLyrics/ RetrieveArtwork function in order set by the user in the MusicBee Tags(2) preferences screen until a match is found
