@@ -158,18 +158,22 @@ namespace MusicBeePlugin
                                 {
                                     break;
                                 }
-                                else // If the scrobble fails display the cause to the user.
+                                else // If the scrobble fails save it for a later resubmission and log the error.
                                 {
                                     // Log the timestamp and the error message in the error file.
                                     string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), DateTime.Now.ToString() + "\n" +
                                                                                                                 submitListenResponse.Result.Content.ReadAsStringAsync().Result + "\n");
+
+                                    // Save the json scrobble to a file.
+                                    SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
+
                                     // MessageBox.Show("ScrobblerBrainz error: " + submitListenResponse.Result.Content.ReadAsStringAsync().Result);
                                 }
                             }
-                            catch (HttpRequestException)
+                            catch (HttpRequestException) // When offline, save the scrobble for a later resubmission.
                             {
-                                // Nothing to do here for now, implement offline scrobbling in the future.
+                                SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
                             }
                         }
                     }
@@ -177,11 +181,14 @@ namespace MusicBeePlugin
             }
         }
 
-        public void SaveScrobble()
+        public void SaveScrobble(string timestamp, string json)
         {
             // Create the folder where offline scrobbles will be stored.
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
             Directory.CreateDirectory(String.Concat(dataPath, "scrobbles"));
+
+            // Save the scrobble.
+            File.WriteAllText(String.Concat(dataPath, "scrobbles\\", timestamp, ".json"), json);
         }
               
         // return an array of lyric or artwork provider names this plugin supports
