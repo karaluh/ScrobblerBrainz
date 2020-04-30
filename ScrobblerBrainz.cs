@@ -158,13 +158,15 @@ namespace MusicBeePlugin
                                 {
                                     break;
                                 }
-                                else // If the scrobble fails display the cause to the user.
+                                else // If the scrobble fails log it and the error.
                                 {
                                     // Log the timestamp and the error message in the error file.
                                     string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
-                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), DateTime.Now.ToString() + "\n" +
-                                                                                                                submitListenResponse.Result.Content.ReadAsStringAsync().Result + "\n");
-                                    // MessageBox.Show("ScrobblerBrainz error: " + submitListenResponse.Result.Content.ReadAsStringAsync().Result);
+                                    string errorTimestamp = DateTime.Now.ToString();
+                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " " +
+                                                                                                                submitListenJson + Environment.NewLine);
+                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " " +
+                                                                                                                submitListenResponse.Result.Content.ReadAsStringAsync().Result + Environment.NewLine);
                                 }
                             }
                             catch (HttpRequestException)
