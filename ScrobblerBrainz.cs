@@ -167,6 +167,12 @@ namespace MusicBeePlugin
                                                                                                                 submitListenJson + Environment.NewLine);
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " " +
                                                                                                                 submitListenResponse.Result.Content.ReadAsStringAsync().Result + Environment.NewLine);
+
+                                    // In case there's a problem with the scrobble JSON, the error is permanent so do not retry.
+                                    if (submitListenResponse.Status.ToString() == "400")
+                                    {
+                                        break;
+                                    }
                                 }
                             }
                             catch (HttpRequestException)
