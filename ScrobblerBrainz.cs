@@ -147,7 +147,10 @@ namespace MusicBeePlugin
                         // Prepare and post the scrobble.
                         HttpClient httpClient = new HttpClient();
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);  // Set the authorization headers.
-                        string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": " + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \"" + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }";
+                        string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
+                                                  + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
+                                                  + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
+                                                  + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }";
 
                         for (int i = 0; i < 5; i++) // In case of temporary errors do up to 5 retries.
                         {
@@ -163,13 +166,13 @@ namespace MusicBeePlugin
                                     // Log the timestamp and the error message in the error file.
                                     string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
                                     string errorTimestamp = DateTime.Now.ToString();
-                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " " +
-                                                                                                                submitListenJson + Environment.NewLine);
-                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " " +
-                                                                                                                submitListenResponse.Result.Content.ReadAsStringAsync().Result + Environment.NewLine);
+                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
+                                                                                                                + submitListenJson + Environment.NewLine);
+                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
+                                                                                                                + submitListenResponse.Result.Content.ReadAsStringAsync().Result + Environment.NewLine);
 
                                     // In case there's a problem with the scrobble JSON, the error is permanent so do not retry.
-                                    if (submitListenResponse.Status.ToString() == "400")
+                                    if (submitListenResponse.Result.StatusCode.ToString() == "BadRequest")
                                     {
                                         break;
                                     }
