@@ -7,6 +7,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Web;
 
 namespace MusicBeePlugin
 {
@@ -134,9 +135,9 @@ namespace MusicBeePlugin
                     break;
 
                 case NotificationType.TrackChanged:
-                    artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
-                    track = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
-                    release = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
+                    artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
+                    track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
+                    release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
                     break;
 
                 case NotificationType.PlayCountersChanged:
