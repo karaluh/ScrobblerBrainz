@@ -111,19 +111,18 @@ namespace MusicBeePlugin
             // Nothing is being done here because the settings are left after uninstalation by design.
         }
 
-        // receive event notifications from MusicBee
-        // you need to set about.ReceiveNotificationFlags = PlayerEvents to receive all notifications, and not just the startup event
+        // Receive event notifications from MusicBee.
         public void ReceiveNotification(string sourceFileUrl, NotificationType type)
         {
             
-            // perform some action depending on the notification type
+            // Perform some action depending on the notification type.
             switch (type)
             {
-                case NotificationType.PluginStartup:
-                    // perform startup initialisation
-                    artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
-                    track = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle);
-                    release = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album);
+                case NotificationType.PluginStartup: // Perform startup initialisation.
+                    // Get the metadata of the track selected by MusicBee on startup to know what to scrobble.
+                    artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
+                    track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
+                    release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
                     
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
@@ -134,25 +133,26 @@ namespace MusicBeePlugin
                     //}
                     break;
 
-                case NotificationType.TrackChanged:
+                case NotificationType.TrackChanged: // Update the metadata on track change.
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
                     break;
 
-                case NotificationType.PlayCountersChanged:
-                    if (!String.IsNullOrEmpty(userToken)) // If the user token is configured.
+                case NotificationType.PlayCountersChanged: // Scrobble the track when playcount is changed.
+                    if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
                     {
                         timestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
 
-                        // Prepare and post the scrobble.
+                        // Prepare the scrobble.
                         HttpClient httpClient = new HttpClient();
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken);  // Set the authorization headers.
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken); // Set the authorization headers.
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
                                                   + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
-                                                  + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }";
+                                                  + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
 
+                        // Post the scrobble.
                         for (int i = 0; i < 5; i++) // In case of temporary errors do up to 5 retries.
                         {
                             try
@@ -164,7 +164,7 @@ namespace MusicBeePlugin
                                 }
                                 else // If the scrobble fails log it and the error.
                                 {
-                                    // Log the timestamp and the error message in the error file.
+                                    // Log the timestamp, the failed scrobble and the error message in the error file.
                                     string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
                                     string errorTimestamp = DateTime.Now.ToString();
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
