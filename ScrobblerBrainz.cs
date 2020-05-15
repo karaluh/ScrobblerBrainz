@@ -166,13 +166,6 @@ namespace MusicBeePlugin
                                 {
                                     // Log the timestamp, the failed scrobble and the error message in the error file.
                                     string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
-                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), DateTime.Now.ToString() + "\n" +
-                                                                                                                submitListenResponse.Result.Content.ReadAsStringAsync().Result + "\n");
-
-                                    // Save the json scrobble to a file.
-                                    SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
-
-                                    // MessageBox.Show("ScrobblerBrainz error: " + submitListenResponse.Result.Content.ReadAsStringAsync().Result);
                                     string errorTimestamp = DateTime.Now.ToString();
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
                                                                                                                 + submitListenJson + Environment.NewLine);
@@ -182,7 +175,15 @@ namespace MusicBeePlugin
                                     // In case there's a problem with the scrobble JSON, the error is permanent so do not retry.
                                     if (submitListenResponse.Result.StatusCode.ToString() == "BadRequest")
                                     {
+                                        // Save the scrobble to a file and exit the loop.
+                                        SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
                                         break;
+                                    }
+
+                                    // If this is the last retry save the scrobble.
+                                    if (i == 4)
+                                    {
+                                        SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
                                     }
                                 }
                             }
