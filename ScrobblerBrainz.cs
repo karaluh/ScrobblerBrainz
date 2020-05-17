@@ -160,7 +160,7 @@ namespace MusicBeePlugin
                                 var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
                                 if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, exit the loop.
                                 {
-                                    break;
+                                     break;
                                 }
                                 else // If the scrobble fails save it for a later resubmission and log the error.
                                 {
@@ -187,9 +187,10 @@ namespace MusicBeePlugin
                                     }
                                 }
                             }
-                            catch (HttpRequestException) // When offline, save the scrobble for a later resubmission.
+                            catch // When offline, save the scrobble for a later resubmission and exit the loop.
                             {
                                 SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
+                                break;
                             }
                         }
                     }
