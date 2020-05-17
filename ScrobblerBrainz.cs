@@ -202,10 +202,10 @@ namespace MusicBeePlugin
         {
             // Create the folder where offline scrobbles will be stored.
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
-            Directory.CreateDirectory(String.Concat(dataPath, "scrobbles"));
+            Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
 
             // Save the scrobble.
-            File.WriteAllText(String.Concat(dataPath, "scrobbles\\", timestamp, ".json"), json);
+            File.WriteAllText(String.Concat(dataPath, settingsSubfolder, "scrobbles\\", timestamp, ".json"), json);
         }
               
         // return an array of lyric or artwork provider names this plugin supports
