@@ -114,7 +114,9 @@ namespace MusicBeePlugin
         // Receive event notifications from MusicBee.
         public void ReceiveNotification(string sourceFileUrl, NotificationType type)
         {
-            
+            // Get the MusicBee settings path for later.
+            string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
+
             // Perform some action depending on the notification type.
             switch (type)
             {
@@ -123,7 +125,10 @@ namespace MusicBeePlugin
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
-                    
+
+                    // Scrobble any offline scrobbles.
+                    string[] offlineScrobbles = Directory.GetFiles(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
+
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
                     //    case PlayState.Playing:
@@ -165,7 +170,6 @@ namespace MusicBeePlugin
                                 else // If the scrobble fails save it for a later resubmission and log the error.
                                 {
                                     // Log the timestamp, the failed scrobble and the error message in the error file.
-                                    string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
                                     string errorTimestamp = DateTime.Now.ToString();
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
                                                                                                                 + submitListenJson + Environment.NewLine);
