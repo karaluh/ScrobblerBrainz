@@ -117,6 +117,11 @@ namespace MusicBeePlugin
             // Get the MusicBee settings path for later.
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
 
+            // Prepare the HTTP client instance for later.
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken); // Set the authorization headers.
+            System.Threading.Tasks.Task<HttpResponseMessage> submitListenResponse;
+
             // Perform some action depending on the notification type.
             switch (type)
             {
@@ -126,9 +131,15 @@ namespace MusicBeePlugin
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
 
-                    // Scrobble any offline scrobbles.
+                    // Re-scrobble any offline scrobbles.
                     string[] offlineScrobbles = Directory.GetFiles(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
-
+                    for (int i = 0; i < offlineScrobbles.Length; i++)
+                    {
+                        if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
+                        {
+                            submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
+                        }
+                    }
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
                     //    case PlayState.Playing:
@@ -150,8 +161,6 @@ namespace MusicBeePlugin
                         timestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
 
                         // Prepare the scrobble.
-                        HttpClient httpClient = new HttpClient();
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken); // Set the authorization headers.
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
                                                   + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
@@ -162,7 +171,7 @@ namespace MusicBeePlugin
                         {
                             try
                             {
-                                var submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
+                                submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
                                 if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, exit the loop.
                                 {
                                      break;
