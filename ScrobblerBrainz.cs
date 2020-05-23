@@ -137,17 +137,24 @@ namespace MusicBeePlugin
                     {
                         if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
                         {
-                            submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
-                            if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, remove the file.
+                            try
                             {
-                                try
+                                submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
+                                if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, remove the file.
                                 {
-                                    File.Delete(offlineScrobbles[i]);
+                                    try
+                                    {
+                                        File.Delete(offlineScrobbles[i]);
+                                    }
+                                    catch (IOException) // Handle the case where the saved scrobble is opened.
+                                    {
+                                        // Do nothing, the file will be removed on the next run.
+                                    }
                                 }
-                                catch(IOException) // Handle the case where the saved scrobble is opened.
-                                {
-                                    // Do nothing, the file will be removed on the next run.
-                                }
+                            }
+                            catch // Handle the exception of connectivity issues.
+                            {
+                                // Do nothing, the file will be re-scrobbled on the next run.
                             }
                         }
                     }
