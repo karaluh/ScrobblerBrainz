@@ -43,8 +43,8 @@ namespace MusicBeePlugin
 
             // Plugin version:
             about.VersionMajor = 0;
-            about.VersionMinor = 0;
-            about.Revision = 1;
+            about.VersionMinor = 1;
+            about.Revision = 0;
 
             about.MinInterfaceVersion = 30;
             about.MinApiRevision = 40;
@@ -152,7 +152,7 @@ namespace MusicBeePlugin
                                     }
                                 }
                             }
-                            catch // Handle the exception of connectivity issues.
+                            catch // Handle the connectivity issues exception.
                             {
                                 // Do nothing, the file will be re-scrobbled on the next run.
                             }
