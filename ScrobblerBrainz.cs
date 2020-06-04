@@ -131,6 +131,7 @@ namespace MusicBeePlugin
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
 
+                    MessageBox.Show(Properties.Settings.Default.userToken);
                     // Re-scrobble any offline scrobbles.
                     string[] offlineScrobbles = Directory.GetFiles(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
                     for (int i = 0; i < offlineScrobbles.Length; i++)
