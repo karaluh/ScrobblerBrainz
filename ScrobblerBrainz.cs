@@ -30,6 +30,8 @@ namespace MusicBeePlugin
         public string track = "";
         public string release = "";
 
+        int playcount;
+
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
             mbApiInterface = new MusicBeeApiInterface();
@@ -130,6 +132,9 @@ namespace MusicBeePlugin
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
+
+                    // Get the current playcount to see if it changes or the song was skipped.
+                    playcount = Int32.Parse(mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount));
 
                     // Re-scrobble any offline scrobbles.
                     string[] offlineScrobbles = Directory.GetFiles(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
