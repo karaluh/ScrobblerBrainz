@@ -181,12 +181,12 @@ namespace MusicBeePlugin
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
                     break;
 
-                case NotificationType.PlayCountersChanged: // Scrobble the track when playcount is changed.
-                    if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
+                case NotificationType.PlayCountersChanged: // This is emitted each time either a play count OR a skip count increases.
+                    // Scrobble the track but only if the user token is configured and the song wasn't skipped.
+                    if (!String.IsNullOrEmpty(userToken) && !(previousPlaycount == mbApiInterface.Library_GetFileProperty(sourceFileUrl, FilePropertyType.PlayCount)))
                     {
                         timestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
 
-                        MessageBox.Show(previousPlaycount+" "+mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount));
                         // Prepare the scrobble.
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
                                                   + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
