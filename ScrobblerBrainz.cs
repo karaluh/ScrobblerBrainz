@@ -30,7 +30,7 @@ namespace MusicBeePlugin
         public string track = "";
         public string release = "";
 
-        int playcount;
+        string previousPlaycount;
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -134,7 +134,7 @@ namespace MusicBeePlugin
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
 
                     // Get the current playcount to see if it changes or the song was skipped.
-                    playcount = Int32.Parse(mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount));
+                    previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
 
                     // Re-scrobble any offline scrobbles.
                     string[] offlineScrobbles = Directory.GetFiles(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
@@ -176,6 +176,9 @@ namespace MusicBeePlugin
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
+
+                    // Get the current playcount to see if it changes or the song was skipped.
+                    previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
                     break;
 
                 case NotificationType.PlayCountersChanged: // Scrobble the track when playcount is changed.
@@ -183,6 +186,7 @@ namespace MusicBeePlugin
                     {
                         timestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
 
+                        MessageBox.Show(previousPlaycount+" "+mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount));
                         // Prepare the scrobble.
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
                                                   + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
