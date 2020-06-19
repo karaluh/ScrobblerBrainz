@@ -10,7 +10,7 @@ A MusicBee plug-in to scrobble tracks to ListenBrainz.
 1. Or any other feature the last.fm scrobbler has.
 
 # Download
-https://github.com/karaluh/ScrobblerBrainz/releases/download/v0.1.0-beta/mb_ScrobblerBrainz.dll
+https://github.com/karaluh/ScrobblerBrainz/releases/download/v0.1.1-beta/mb_ScrobblerBrainz.dll
 
 # Usage
 1. Get MusicBee https://getmusicbee.com/downloads/
