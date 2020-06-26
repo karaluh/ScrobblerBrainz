@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
 
+
 namespace MusicBeePlugin
 {
     public partial class Plugin
@@ -50,6 +51,12 @@ namespace MusicBeePlugin
             about.MinApiRevision = 40;
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
             about.ConfigurationPanelHeight = 30;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
+
+            // Migrate the old config to XML if it exists
+            if(File.Exists(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile)))
+            {
+                MessageBox.Show("tak");
+            }
 
             try // Read the user token from a file.
             {
