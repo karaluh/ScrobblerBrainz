@@ -220,6 +220,9 @@ namespace MusicBeePlugin
                                 {
                                     // Log the timestamp, the failed scrobble and the error message in the error file.
                                     string errorTimestamp = DateTime.Now.ToString();
+                                    
+                                    // Create the folder where the error log will be stored.
+                                    Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
                                                                                                                 + submitListenJson + Environment.NewLine);
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
