@@ -23,7 +23,7 @@ namespace MusicBeePlugin
 
         // Settings:
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
-        public string settingsFile = "usertoken"; // Plugin settings file.
+        public string settingsFile = "usertoken"; // Old plugin settings file.
 
         // Scrobble metadata:
         TimeSpan timestamp;
@@ -66,19 +66,6 @@ namespace MusicBeePlugin
             // Read the user token from settings.
             userToken = Properties.Settings.Default.userToken;
 
-            /*try // Read the user token from a file.
-            {
-                userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
-            }
-            catch (FileNotFoundException)
-            {
-                // No need to do anything, it means the file with the user token isn't created yet.
-            }
-            catch (DirectoryNotFoundException)
-            {
-                // No need to do anything, it means the directory with the user token isn't created yet.
-            }*/
-
             return about;
         }
 
@@ -108,17 +95,12 @@ namespace MusicBeePlugin
         // its up to you to figure out whether anything has changed and needs updating
         public void SaveSettings()
         {
-            // save any persistent settings in a sub-folder of this path
-            //string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
-            //Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
-            
             // Update the user token in case it was changed by the user.
             userToken = userTokenTextBox.Text;
 
             // Save the user token in the XML.
             Properties.Settings.Default.userToken = userToken;
             Properties.Settings.Default.Save();
-            //File.WriteAllText(String.Concat(dataPath, settingsSubfolder, settingsFile), userToken); // Save the user token to a file.
         }
 
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
