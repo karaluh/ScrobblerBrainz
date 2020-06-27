@@ -59,8 +59,8 @@ namespace MusicBeePlugin
                 Properties.Settings.Default.userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
                 Properties.Settings.Default.Save();
 
-                // Remove the file.
-
+                // Remove the old file.
+                File.Delete(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
             }
 
             // Read the user token from settings.
