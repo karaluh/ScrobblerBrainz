@@ -55,7 +55,8 @@ namespace MusicBeePlugin
             // Migrate the old config to XML if it exists
             if(File.Exists(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile)))
             {
-                MessageBox.Show("tak");
+                Properties.Settings.Default.userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
+                Properties.Settings.Default.Save();
             }
 
             try // Read the user token from a file.
