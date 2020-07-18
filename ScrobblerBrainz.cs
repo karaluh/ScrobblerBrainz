@@ -105,7 +105,7 @@ namespace MusicBeePlugin
                 playCountSyncCheckBox.Text = "synchronise Play Count";
                 
                 // Add all of the controls to the panel.
-                configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox, playcountSyncLabel, playcountSyncCheckBox });
+                configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox, playCountSyncLabel, playCountSyncCheckBox });
             }
             return false;
         }
