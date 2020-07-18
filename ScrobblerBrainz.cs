@@ -21,6 +21,8 @@ namespace MusicBeePlugin
         public string userToken;
         public TextBox userTokenTextBox;
 
+        public CheckBox playcountSyncCheckBox;
+
         // Settings:
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
         public string settingsFile = "usertoken"; // Old plugin settings file.
@@ -84,9 +86,19 @@ namespace MusicBeePlugin
                 prompt.Location = new Point(0, 0);
                 prompt.Text = "ListenBrainz User token:";
                 userTokenTextBox = new TextBox();
+                //userTokenTextBox.Size = new Size(104, 16);
                 userTokenTextBox.Bounds = new Rectangle(135, 0, 100, userTokenTextBox.Height);
                 userTokenTextBox.Text = userToken;
-                configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox });
+
+                Label playcountSyncLabel = new Label();
+                playcountSyncLabel.Location = new Point(0, 16);
+                playcountSyncLabel.Text = "synchronise from ListenBrainz to your library on startup:";
+
+                playcountSyncCheckBox = new CheckBox();
+                playcountSyncCheckBox.Text = "synchronise Play Count";
+                playcountSyncCheckBox.Location = new Point(0, 32);
+                configPanel.AutoSize = true;
+                configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox, playcountSyncLabel, playcountSyncCheckBox });
             }
             return false;
         }
