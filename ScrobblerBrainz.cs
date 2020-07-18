@@ -21,7 +21,8 @@ namespace MusicBeePlugin
         public string userToken;
         public TextBox userTokenTextBox;
 
-        public CheckBox playcountSyncCheckBox;
+        // Play count sync setting.
+        public CheckBox playCountSyncCheckBox;
 
         // Settings:
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
@@ -52,7 +53,7 @@ namespace MusicBeePlugin
             about.MinInterfaceVersion = 30;
             about.MinApiRevision = 40;
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
-            about.ConfigurationPanelHeight = 30;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
+            about.ConfigurationPanelHeight = 50;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
             // Migrate the old config to XML if it exists
             if(File.Exists(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile)))
@@ -81,6 +82,7 @@ namespace MusicBeePlugin
             if (panelHandle != IntPtr.Zero)
             {
                 Panel configPanel = (Panel)Panel.FromHandle(panelHandle);
+                configPanel.AutoSize = true;
                 Label prompt = new Label();
                 prompt.AutoSize = true;
                 prompt.Location = new Point(0, 0);
@@ -90,14 +92,19 @@ namespace MusicBeePlugin
                 userTokenTextBox.Bounds = new Rectangle(135, 0, 100, userTokenTextBox.Height);
                 userTokenTextBox.Text = userToken;
 
-                Label playcountSyncLabel = new Label();
-                playcountSyncLabel.Location = new Point(0, 16);
-                playcountSyncLabel.Text = "synchronise from ListenBrainz to your library on startup:";
-
-                playcountSyncCheckBox = new CheckBox();
-                playcountSyncCheckBox.Text = "synchronise Play Count";
-                playcountSyncCheckBox.Location = new Point(0, 32);
-                configPanel.AutoSize = true;
+                // Play count sync related controls.
+                // Label.
+                Label playCountSyncLabel = new Label();
+                playCountSyncLabel.Location = new Point(0, 25);
+                playCountSyncLabel.AutoSize = true;
+                playCountSyncLabel.Text = "synchronise from ListenBrainz to your library on startup:";
+                // Check box.
+                playCountSyncCheckBox = new CheckBox();
+                playCountSyncCheckBox.Location = new Point(0, 43);
+                playCountSyncCheckBox.AutoSize = true;
+                playCountSyncCheckBox.Text = "synchronise Play Count";
+                
+                // Add all of the controls to the panel.
                 configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox, playcountSyncLabel, playcountSyncCheckBox });
             }
             return false;
