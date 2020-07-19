@@ -22,6 +22,7 @@ namespace MusicBeePlugin
         public TextBox userTokenTextBox;
 
         // Play count sync setting.
+        public bool playCountSync;
         public CheckBox playCountSyncCheckBox;
 
         // Settings:
@@ -66,8 +67,9 @@ namespace MusicBeePlugin
                 File.Delete(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
             }
 
-            // Read the user token from settings.
+            // Read the settings from a file.
             userToken = Properties.Settings.Default.userToken;
+            playCountSync = Properties.Settings.Default.playCountSync;
 
             return about;
         }
@@ -103,6 +105,7 @@ namespace MusicBeePlugin
                 playCountSyncCheckBox.Location = new Point(0, 43);
                 playCountSyncCheckBox.AutoSize = true;
                 playCountSyncCheckBox.Text = "synchronise Play Count";
+                playCountSyncCheckBox.Checked = playCountSync;
                 
                 // Add all of the controls to the panel.
                 configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox, playCountSyncLabel, playCountSyncCheckBox });
@@ -114,11 +117,13 @@ namespace MusicBeePlugin
         // its up to you to figure out whether anything has changed and needs updating
         public void SaveSettings()
         {
-            // Update the user token in case it was changed by the user.
+            // Update the settings in case they were changed by the user.
             userToken = userTokenTextBox.Text;
+            playCountSync = playCountSyncCheckBox.Checked;
 
             // Save the user token in the XML.
             Properties.Settings.Default.userToken = userToken;
+            Properties.Settings.Default.playCountSync = playCountSync;
             Properties.Settings.Default.Save();
         }
 

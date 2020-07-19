@@ -25,13 +25,25 @@ namespace MusicBeePlugin.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("test")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string userToken {
             get {
                 return ((string)(this["userToken"]));
             }
             set {
                 this["userToken"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool playCountSync {
+            get {
+                return ((bool)(this["playCountSync"]));
+            }
+            set {
+                this["playCountSync"] = value;
             }
         }
     }
