@@ -2,15 +2,14 @@
 A MusicBee plug-in to scrobble tracks to ListenBrainz.
 
 # Restrictions
-1. ~~Unless there are issues listed in pt. 4~~ For me it works better than the last.fm scrobbler.
+1. Works better than the last.fm scrobbler, even tracks shorter than 30 s. are scrobbled.
 1. No MBIDs in the scrobble. MusicBee doesn't expose them in the API.
-1. ~~No offline scrobbling. All scrobbles are lost when there's no internet or ListenBrainz is having trouble.~~
 1. No playcount sync.
 1. No "now listening".
 1. Or any other feature the last.fm scrobbler has.
 
 # Download
-https://github.com/karaluh/ScrobblerBrainz/releases/download/v0.1.1-beta/mb_ScrobblerBrainz.dll
+https://github.com/karaluh/ScrobblerBrainz/releases/download/v1.0.0/mb_ScrobblerBrainz.dll
 
 # Usage
 1. Get MusicBee https://getmusicbee.com/downloads/
