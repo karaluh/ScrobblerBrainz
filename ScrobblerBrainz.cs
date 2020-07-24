@@ -194,12 +194,19 @@ namespace MusicBeePlugin
                     }
 
                     // Sync play count from ListenBrainz if this setting is enabled.
-                    MessageBox.Show(playCountSync.ToString());
                     if (playCountSync)
                     {
-                        MessageBox.Show("sync");
+                        List<string> list = new List<string>();
+                        string[] aaa = list.ToArray();
+                        mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" >< Condition Field = \"FilePlayCount\" Comparison = \"GreaterThan\" Value = \"0\" /></ Conditions >", out aaa);
+                        //MessageBox.Show(aaa.Length.ToString());
+                        foreach (var item in aaa)
+                        {
+                            MessageBox.Show(item);
+                        }
                     }
                     
+
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
                     //    case PlayState.Playing:
