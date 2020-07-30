@@ -196,14 +196,17 @@ namespace MusicBeePlugin
                     // Sync play count from ListenBrainz if this setting is enabled.
                     if (playCountSync)
                     {
-                        List<string> list = new List<string>();
-                        string[] aaa = list.ToArray();
-                        mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" >< Condition Field = \"FilePlayCount\" Comparison = \"GreaterThan\" Value = \"0\" /></ Conditions >", out aaa);
-                        //MessageBox.Show(aaa.Length.ToString());
-                        foreach (var item in aaa)
-                        {
-                            MessageBox.Show(item);
-                        }
+                        // Library_QueryFilesEx expects an array and since we don't know the size yet we're declaring a list and converting it to an array.
+                        List<string> allTracksList = new List<string>();
+                        string[] allTracksArray = allTracksList.ToArray();
+
+                        // Get all files from the library.
+                        mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
+                        MessageBox.Show(allTracksArray.Length.ToString());
+                        //foreach (var item in aaa)
+                        //{
+                          //  MessageBox.Show(item);
+                        //}
                     }
                     
 
