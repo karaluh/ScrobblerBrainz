@@ -202,13 +202,16 @@ namespace MusicBeePlugin
 
                         // Get all files from the library.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
-                        MessageBox.Show(allTracksArray.Length.ToString());
+
+                        var listensJson = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100");
+                        //MessageBox.Show(allTracksArray.Length.ToString());
+                        MessageBox.Show(listensJson.Result.Content.ReadAsStringAsync().Result);
                         //foreach (var item in aaa)
                         //{
-                          //  MessageBox.Show(item);
+                        //  MessageBox.Show(item);
                         //}
                     }
-                    
+
 
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
