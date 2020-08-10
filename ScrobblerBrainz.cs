@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
+using Newtonsoft.Json;
 
 
 namespace MusicBeePlugin
@@ -203,9 +204,10 @@ namespace MusicBeePlugin
                         // Get all files from the library.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
-                        var listensJson = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100");
+                        var listensJsonResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100");
+                        dynamic listensJson = JsonConvert.DeserializeObject<string>(listensJsonResponse.Result.Content.ReadAsStringAsync().Result);
                         //MessageBox.Show(allTracksArray.Length.ToString());
-                        MessageBox.Show(listensJson.Result.Content.ReadAsStringAsync().Result);
+                        MessageBox.Show(listensJson);
                         //foreach (var item in aaa)
                         //{
                         //  MessageBox.Show(item);
