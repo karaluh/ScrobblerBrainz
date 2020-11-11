@@ -223,14 +223,25 @@ namespace MusicBeePlugin
                         // Declare a list of all scrobbles.
                         List<Listen> allScroblesList = new List<Listen>();
 
+                        // Get the listen count, it is needed to know how many listens shold be gotten.
+                        var getListenCountResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listen-count");
+
+                        // TODO: HTTP error handling.
+
+                        // Deserialize the total listen count for the user.
+                        string listenCountResponseContent = getListenCountResponse.Result.Content.ReadAsStringAsync().Result;
+                        dynamic listenCountJson = JsonConvert.DeserializeObject(listenCountResponseContent);
+                        int listenCount = listenCountJson.payload.Value<int>("count");
+                        MessageBox.Show(listenCount.ToString());
+
                         // Get the full scrobble history. Values for "count" and "time_range" parameters are set to maximum what the API allows.
                         var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100&time_range=73");
                         
                         // TODO: HTTP error handling.
 
                         // Get the content of the GET querry and convert it to an object.
-                        string listenResponseContent = getListensResponse.Result.Content.ReadAsStringAsync().Result;
-                        dynamic listensJson = JsonConvert.DeserializeObject(listenResponseContent);
+                        string listensResponseContent = getListensResponse.Result.Content.ReadAsStringAsync().Result;
+                        dynamic listensJson = JsonConvert.DeserializeObject(listensResponseContent);
 
                         // Strip everything but the listens array from the JSON.
                         JArray listensArray = listensJson.payload.listens;
