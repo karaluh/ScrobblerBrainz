@@ -232,40 +232,50 @@ namespace MusicBeePlugin
                         string listenCountResponseContent = getListenCountResponse.Result.Content.ReadAsStringAsync().Result;
                         dynamic listenCountJson = JsonConvert.DeserializeObject(listenCountResponseContent);
                         int listenCount = listenCountJson.payload.Value<int>("count");
-                        MessageBox.Show(listenCount.ToString());
 
-                        // Get the full scrobble history. Values for "count" and "time_range" parameters are set to maximum what the API allows.
-                        var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100&time_range=73");
-                        
-                        // TODO: HTTP error handling.
-
-                        // Get the content of the GET querry and convert it to an object.
-                        string listensResponseContent = getListensResponse.Result.Content.ReadAsStringAsync().Result;
-                        dynamic listensJson = JsonConvert.DeserializeObject(listensResponseContent);
-
-                        // Strip everything but the listens array from the JSON.
-                        JArray listensArray = listensJson.payload.listens;
-                        
-                        // Get the listen metadata from the JObject array.
-                        foreach (JObject listen in listensArray)
+                        // Get all scrobbles.
+                        int receivedScrobbles = 0;
+                        do
                         {
-                            // Get the track_metadata object where the actual values are stored
-                            JObject trackMetadata = listen.Value<JObject>("track_metadata");
+                            // Get a portion of the scrobble history. Values for "count" and "time_range" parameters are set to maximum what the API allows.
+                            var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100&time_range=73");
 
-                            // And finally get the actual metadata.
-                            string artistName = trackMetadata.Value<string>("artist_name");
-                            string trackName = trackMetadata.Value<string>("track_name");
-                            string releaseName = trackMetadata.Value<string>("release_name");
+                            // TODO: HTTP error handling.
 
-                            // And add it to the scrobble list.
-                            allScroblesList.Add(new Listen(artistName, trackName, releaseName));
-                        }
+                            // Deserialize the content of the GET querry.
+                            string listensResponseContent = getListensResponse.Result.Content.ReadAsStringAsync().Result;
+                            dynamic listensJson = JsonConvert.DeserializeObject(listensResponseContent);
 
-                        /*foreach (Listen retrivedListen in allScroblesList)
-                        {
-                            MessageBox.Show(retrivedListen.artist_name + " - " + retrivedListen.track_name + " from " + retrivedListen.release_name);
-                        }*/
-                        MessageBox.Show(allScroblesList.Count.ToString());
+                            // Strip everything but the listens array from the JSON.
+                            JArray listensArray = listensJson.payload.listens;
+
+                            // Get the listen metadata from the JObject array.
+                            foreach (JObject listen in listensArray)
+                            {
+                                // Get the track_metadata object where the actual values are stored
+                                JObject trackMetadata = listen.Value<JObject>("track_metadata");
+
+                                // And finally get the actual metadata.
+                                string artistName = trackMetadata.Value<string>("artist_name");
+                                string trackName = trackMetadata.Value<string>("track_name");
+                                string releaseName = trackMetadata.Value<string>("release_name");
+
+                                // And add it to the scrobble list.
+                                allScroblesList.Add(new Listen(artistName, trackName, releaseName));
+                            }
+
+                            // Keep track on how many scrobbles are already eceived.
+                            receivedScrobbles += allScroblesList.Count;
+
+                            /*foreach (Listen retrivedListen in allScroblesList)
+                            {
+                                MessageBox.Show(retrivedListen.artist_name + " - " + retrivedListen.track_name + " from " + retrivedListen.release_name);
+                            }*/
+                            MessageBox.Show(allScroblesList.Count.ToString());
+                        
+                        // Stop if the number of received scrobbles is greater or equal to the total scrobbles.
+                        // The number can be greater if one or more scrobbles is submitted before the complete history is received.
+                        } while (allScroblesList.Count < listenCount);
                     }
 
 
