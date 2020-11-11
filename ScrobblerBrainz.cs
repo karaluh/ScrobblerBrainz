@@ -211,17 +211,29 @@ namespace MusicBeePlugin
                         // Get all files from the library.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
-                        // Get the 
-                        var listensJsonResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=3");
-                        string aaa = listensJsonResponse.Result.Content.ReadAsStringAsync().Result;
+                        // Get the full scrobble history.
+                        var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=3");
                         
-                        dynamic listensJson = JsonConvert.DeserializeObject(aaa);
-                        JArray bbb = listensJson.payload.listens;
-                        foreach (JObject ccc in bbb)
+                        // TODO: HTTP error handling.
+
+                        // Get the content of the querry and convert it to an object.
+                        string listenResponseContent = getListensResponse.Result.Content.ReadAsStringAsync().Result;
+                        dynamic listensJson = JsonConvert.DeserializeObject(listenResponseContent);
+
+                        // Strip everything but the listens array from the JSON.
+                        JArray listensArray = listensJson.payload.listens;
+                        
+                        // Get the listen metadata from the JObject array.
+                        foreach (JObject listen in listensArray)
                         {
-                            JObject trackmetadata = ccc.Value<JObject>("track_metadata");
-                            var xxx = trackmetadata.Value<string>("artist_name");
-                            MessageBox.Show(xxx.ToString());
+                            // Get the track_metadata object where the actual values are stored
+                            JObject trackMetadata = listen.Value<JObject>("track_metadata");
+
+                            // And finally get the actual metadata.
+                            string xxx = trackMetadata.Value<string>("artist_name");
+                            string yyy = trackMetadata.Value<string>("track_name");
+                            string zzz = trackMetadata.Value<string>("release_name");
+                            MessageBox.Show(xxx.ToString()+" - "+yyy.ToString()+" from "+zzz.ToString());
                         }
                     }
 
