@@ -9,7 +9,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
 using Newtonsoft.Json;
-
+using Newtonsoft.Json.Linq;
 
 namespace MusicBeePlugin
 {
@@ -35,6 +35,13 @@ namespace MusicBeePlugin
         public string artist = "";
         public string track = "";
         public string release = "";
+
+        public class Listen
+        {
+            public string artist_name;
+            public string release_name;
+            public string track_name;
+        }
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -197,21 +204,25 @@ namespace MusicBeePlugin
                     // Sync play count from ListenBrainz if this setting is enabled.
                     if (playCountSync)
                     {
-                        // Library_QueryFilesEx expects an array and since we don't know the size yet we're declaring a list and converting it to an array.
+                        // Declare a list and convert it to an array because Library_QueryFilesEx expects an array and its size is yet unknown.
                         List<string> allTracksList = new List<string>();
                         string[] allTracksArray = allTracksList.ToArray();
 
                         // Get all files from the library.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
-                        var listensJsonResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100");
-                        dynamic listensJson = JsonConvert.DeserializeObject<string>(listensJsonResponse.Result.Content.ReadAsStringAsync().Result);
-                        //MessageBox.Show(allTracksArray.Length.ToString());
-                        MessageBox.Show(listensJson);
-                        //foreach (var item in aaa)
-                        //{
-                        //  MessageBox.Show(item);
-                        //}
+                        // Get the 
+                        var listensJsonResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=3");
+                        string aaa = listensJsonResponse.Result.Content.ReadAsStringAsync().Result;
+                        
+                        dynamic listensJson = JsonConvert.DeserializeObject(aaa);
+                        JArray bbb = listensJson.payload.listens;
+                        foreach (JObject ccc in bbb)
+                        {
+                            JObject trackmetadata = ccc.Value<JObject>("track_metadata");
+                            var xxx = trackmetadata.Value<string>("artist_name");
+                            MessageBox.Show(xxx.ToString());
+                        }
                     }
 
 
