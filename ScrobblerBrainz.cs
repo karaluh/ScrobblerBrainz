@@ -220,6 +220,9 @@ namespace MusicBeePlugin
                         // Get all files from the library.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
+                        // Declare a list of all scrobbles.
+                        List<Listen> allScroblesList = new List<Listen>();
+
                         // Get the full scrobble history.
                         var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=3");
                         
@@ -243,9 +246,13 @@ namespace MusicBeePlugin
                             string trackName = trackMetadata.Value<string>("track_name");
                             string releaseName = trackMetadata.Value<string>("release_name");
 
-                            // And store it into the object.
-                            Listen retrivedListen = new Listen(artistName, trackName, releaseName);
-                            MessageBox.Show(retrivedListen.artist_name+" - "+retrivedListen.track_name+" from "+retrivedListen.release_name);
+                            // And add it to the scrobble list.
+                            allScroblesList.Add(new Listen(artistName, trackName, releaseName));
+                        }
+
+                        foreach (Listen retrivedListen in allScroblesList)
+                        {
+                            MessageBox.Show(retrivedListen.artist_name + " - " + retrivedListen.track_name + " from " + retrivedListen.release_name);
                         }
                     }
 
