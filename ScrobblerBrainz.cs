@@ -223,8 +223,8 @@ namespace MusicBeePlugin
                         // Declare a list of all scrobbles.
                         List<Listen> allScroblesList = new List<Listen>();
 
-                        // Get the full scrobble history.
-                        var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=3");
+                        // Get the full scrobble history. Values for "count" and "time_range" parameters are set to maximum what the API allows.
+                        var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100&time_range=73");
                         
                         // TODO: HTTP error handling.
 
@@ -250,10 +250,11 @@ namespace MusicBeePlugin
                             allScroblesList.Add(new Listen(artistName, trackName, releaseName));
                         }
 
-                        foreach (Listen retrivedListen in allScroblesList)
+                        /*foreach (Listen retrivedListen in allScroblesList)
                         {
                             MessageBox.Show(retrivedListen.artist_name + " - " + retrivedListen.track_name + " from " + retrivedListen.release_name);
-                        }
+                        }*/
+                        MessageBox.Show(allScroblesList.Count.ToString());
                     }
 
 
