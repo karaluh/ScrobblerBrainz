@@ -36,11 +36,20 @@ namespace MusicBeePlugin
         public string track = "";
         public string release = "";
 
+        // Object definition for storingthe retrivied listens.
         public class Listen
         {
             public string artist_name;
-            public string release_name;
             public string track_name;
+            public string release_name;
+
+            // Constructor.
+            public Listen(string artistName, string trackName, string releaseName)
+            { 
+                artist_name = artistName;
+                track_name = trackName;
+                release_name = releaseName;
+            }
         }
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
@@ -64,7 +73,7 @@ namespace MusicBeePlugin
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
             about.ConfigurationPanelHeight = 50;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
-            // Migrate the old config to XML if it exists
+            // Migrate the old config to XML if it exists.
             if(File.Exists(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile)))
             {
                 // Get the user token from the file and save it in the XML.
@@ -216,7 +225,7 @@ namespace MusicBeePlugin
                         
                         // TODO: HTTP error handling.
 
-                        // Get the content of the querry and convert it to an object.
+                        // Get the content of the GET querry and convert it to an object.
                         string listenResponseContent = getListensResponse.Result.Content.ReadAsStringAsync().Result;
                         dynamic listensJson = JsonConvert.DeserializeObject(listenResponseContent);
 
@@ -230,10 +239,13 @@ namespace MusicBeePlugin
                             JObject trackMetadata = listen.Value<JObject>("track_metadata");
 
                             // And finally get the actual metadata.
-                            string xxx = trackMetadata.Value<string>("artist_name");
-                            string yyy = trackMetadata.Value<string>("track_name");
-                            string zzz = trackMetadata.Value<string>("release_name");
-                            MessageBox.Show(xxx.ToString()+" - "+yyy.ToString()+" from "+zzz.ToString());
+                            string artistName = trackMetadata.Value<string>("artist_name");
+                            string trackName = trackMetadata.Value<string>("track_name");
+                            string releaseName = trackMetadata.Value<string>("release_name");
+
+                            // And store it into the object.
+                            Listen retrivedListen = new Listen(artistName, trackName, releaseName);
+                            MessageBox.Show(retrivedListen.artist_name+" - "+retrivedListen.track_name+" from "+retrivedListen.release_name);
                         }
                     }
 
