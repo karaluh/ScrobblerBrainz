@@ -31,7 +31,7 @@ namespace MusicBeePlugin
         public string settingsFile = "usertoken"; // Old plugin settings file.
 
         // Scrobble metadata:
-        TimeSpan timestamp;
+        TimeSpan postTimestamp;
         public string artist = "";
         public string track = "";
         public string release = "";
@@ -234,11 +234,12 @@ namespace MusicBeePlugin
                         int listenCount = listenCountJson.payload.Value<int>("count");
 
                         // Get all scrobbles.
-                        int receivedScrobbles = 0;
-                        do
+                        int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds; // Get current time in epoch, needed to "paginate" the recived scrobbles.
+                        while (allScroblesList.Count < listenCount)
                         {
                             // Get a portion of the scrobble history. Values for "count" and "time_range" parameters are set to maximum what the API allows.
-                            var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100&time_range=73");
+                            // "max_ts" parameter is used to get the "next page" of scrobbles.
+                            var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100&time_range=73&max_ts=" + getTimestamp);
 
                             // TODO: HTTP error handling.
 
@@ -252,7 +253,10 @@ namespace MusicBeePlugin
                             // Get the listen metadata from the JObject array.
                             foreach (JObject listen in listensArray)
                             {
-                                // Get the track_metadata object where the actual values are stored
+                                // Update the timestamp used in the next GET request with the value from the latest received scrobble.
+                                getTimestamp = listen.Value<int>("listened_at");
+
+                                // Get the track_metadata object where the actual values are stored.
                                 JObject trackMetadata = listen.Value<JObject>("track_metadata");
 
                                 // And finally get the actual metadata.
@@ -264,20 +268,17 @@ namespace MusicBeePlugin
                                 allScroblesList.Add(new Listen(artistName, trackName, releaseName));
                             }
 
-                            // Keep track on how many scrobbles are already eceived.
-                            receivedScrobbles += allScroblesList.Count;
-
                             /*foreach (Listen retrivedListen in allScroblesList)
                             {
                                 MessageBox.Show(retrivedListen.artist_name + " - " + retrivedListen.track_name + " from " + retrivedListen.release_name);
                             }*/
-                            MessageBox.Show(allScroblesList.Count.ToString());
+                            
                         
                         // Stop if the number of received scrobbles is greater or equal to the total scrobbles.
                         // The number can be greater if one or more scrobbles is submitted before the complete history is received.
-                        } while (allScroblesList.Count < listenCount);
+                        }
+                        MessageBox.Show("listen: "+listenCount+" scrobles: "+allScroblesList.Count.ToString());
                     }
-
 
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
@@ -297,11 +298,11 @@ namespace MusicBeePlugin
                 case NotificationType.PlayCountersChanged: // Scrobble the track when playcount is changed.
                     if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
                     {
-                        timestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
+                        postTimestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
 
                         // Prepare the scrobble.
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
-                                                  + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
+                                                  + (int)postTimestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
                                                   + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
 
@@ -331,20 +332,20 @@ namespace MusicBeePlugin
                                     if (submitListenResponse.Result.StatusCode.ToString() == "BadRequest")
                                     {
                                         // Save the scrobble to a file and exit the loop.
-                                        SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
+                                        SaveScrobble(postTimestamp.TotalSeconds.ToString(), submitListenJson);
                                         break;
                                     }
 
                                     // If this is the last retry save the scrobble.
                                     if (i == 4)
                                     {
-                                        SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
+                                        SaveScrobble(postTimestamp.TotalSeconds.ToString(), submitListenJson);
                                     }
                                 }
                             }
                             catch // When offline, save the scrobble for a later resubmission and exit the loop.
                             {
-                                SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
+                                SaveScrobble(postTimestamp.TotalSeconds.ToString(), submitListenJson);
                                 break;
                             }
                         }
