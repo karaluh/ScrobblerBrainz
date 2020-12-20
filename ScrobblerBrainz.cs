@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -241,7 +242,11 @@ namespace MusicBeePlugin
                             // "max_ts" parameter is used to get the "next page" of scrobbles.
                             var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100&time_range=73&max_ts=" + getTimestamp);
 
-                            // TODO: HTTP error handling.
+                            // Ensure to not hit ListenBrainz rate limits https://listenbrainz.readthedocs.io/en/latest/dev/api/#rate-limiting.
+                            if (getListensResponse.Result.Headers.GetValues("X-RateLimit-Remaining").First() == "1")
+                            {
+                                System.Threading.Thread.Sleep(Int32.Parse(getListensResponse.Result.Headers.GetValues("X-RateLimit-Reset-In").First()) * 1000);
+                            }
 
                             // Deserialize the content of the GET querry.
                             string listensResponseContent = getListensResponse.Result.Content.ReadAsStringAsync().Result;
