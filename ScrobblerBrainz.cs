@@ -43,6 +43,7 @@ namespace MusicBeePlugin
             public string artist_name;
             public string track_name;
             public string release_name;
+            public int count = 0;
 
             // Constructor.
             public Listen(string artistName, string trackName, string releaseName)
@@ -218,11 +219,11 @@ namespace MusicBeePlugin
                         List<string> allTracksList = new List<string>();
                         string[] allTracksArray = allTracksList.ToArray();
 
-                        // Get all files from the library.
+                        // Get all files from the library. It's an array of file paths.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
                         // Declare a list of all scrobbles.
-                        List<Listen> allScroblesList = new List<Listen>();
+                        List<Listen> allScrobblesList = new List<Listen>();
 
                         // Get the listen count, it is needed to know how many listens shold be gotten.
                         var getListenCountResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listen-count");
@@ -236,11 +237,16 @@ namespace MusicBeePlugin
 
                         // Get all scrobbles.
                         int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds; // Get current time in epoch, needed to "paginate" the recived scrobbles.
-                        while (allScroblesList.Count < listenCount)
+
+                        // Stop if the number of received scrobbles is greater or equal to the total scrobbles.
+                        // The number can be greater if one or more scrobbles is submitted before the complete history is received.
+                        while (allScrobblesList.Count < listenCount)
                         {
                             // Get a portion of the scrobble history. Values for "count" and "time_range" parameters are set to maximum what the API allows.
                             // "max_ts" parameter is used to get the "next page" of scrobbles.
                             var getListensResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listens?count=100&time_range=73&max_ts=" + getTimestamp);
+
+                            // TODO: HTTP error handling.
 
                             // Ensure to not hit ListenBrainz rate limits https://listenbrainz.readthedocs.io/en/latest/dev/api/#rate-limiting.
                             if (getListensResponse.Result.Headers.GetValues("X-RateLimit-Remaining").First() == "1")
@@ -270,19 +276,39 @@ namespace MusicBeePlugin
                                 string releaseName = trackMetadata.Value<string>("release_name");
 
                                 // And add it to the scrobble list.
-                                allScroblesList.Add(new Listen(artistName, trackName, releaseName));
+                                allScrobblesList.Add(new Listen(artistName, trackName, releaseName));
                             }
-
-                            /*foreach (Listen retrivedListen in allScroblesList)
-                            {
-                                MessageBox.Show(retrivedListen.artist_name + " - " + retrivedListen.track_name + " from " + retrivedListen.release_name);
-                            }*/
-                            
-                        
-                        // Stop if the number of received scrobbles is greater or equal to the total scrobbles.
-                        // The number can be greater if one or more scrobbles is submitted before the complete history is received.
                         }
-                        MessageBox.Show("listen: "+listenCount+" scrobles: "+allScroblesList.Count.ToString());
+
+                        // Count the duplicates in the scrobble history.
+                        // Store the duplicates in a dictionary.
+                        var deduplicatedScrobblesDict = new Dictionary<string, Listen>();
+                        foreach (Listen item in allScrobblesList)
+                        {
+                            // The dictionary key is a concatenated track metadata.
+                            string key = item.artist_name + item.release_name + item.track_name;
+
+                            // If the key exist in the dictionary, incremet the appriporiate listen count.
+                            if (deduplicatedScrobblesDict.TryGetValue(key, out Listen value))
+                            {
+                                value.count++;
+                            }
+                            // Add the key to the dictionary if not.
+                            else
+                            {
+                                deduplicatedScrobblesDict.Add(key, item);
+                            }
+                        }
+
+                        /*foreach (var aaa in deduplicatedScrobblesDict)
+                        {
+                            if (aaa.Value.count > 3)
+                            {
+                                MessageBox.Show(aaa.Value.track_name);
+                            }
+                        }*/
+
+                        MessageBox.Show("listen: "+listenCount+" scrobles: "+allScrobblesList.Count.ToString());
                     }
 
                     //switch (mbApiInterface.Player_GetPlayState())
