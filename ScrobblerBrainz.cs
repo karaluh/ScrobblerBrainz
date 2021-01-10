@@ -300,15 +300,26 @@ namespace MusicBeePlugin
                             }
                         }
 
-                        /*foreach (var aaa in deduplicatedScrobblesDict)
-                        {
-                            if (aaa.Value.count > 3)
-                            {
-                                MessageBox.Show(aaa.Value.track_name);
-                            }
-                        }*/
+                        MessageBox.Show("Download listen: " + listenCount + " scrobles: " + allScrobblesList.Count.ToString());
 
-                        MessageBox.Show("listen: "+listenCount+" scrobles: "+allScrobblesList.Count.ToString());
+                        // Replace the play count in the DB with the one calculated above.
+                        foreach (string file in allTracksArray)
+                        {
+                            // Create the dictionary key.
+                            string key = mbApiInterface.Library_GetFileTag(file, MetaDataType.Artist)
+                                       + mbApiInterface.Library_GetFileTag(file, MetaDataType.Album)
+                                       + mbApiInterface.Library_GetFileTag(file, MetaDataType.TrackTitle);
+
+                            // If the key exists, update the file play count value.
+                            if (deduplicatedScrobblesDict.TryGetValue(key, out Listen value))
+                            {
+                                mbApiInterface.Library_SetFileTag(file, (MetaDataType)FilePropertyType.PlayCount, value.count.ToString());
+                                mbApiInterface.Library_CommitTagsToFile(file);
+                                mbApiInterface.MB_RefreshPanels();
+                            }
+                        }
+
+                        MessageBox.Show("Update listen: "+listenCount+" scrobles: "+allScrobblesList.Count.ToString());
                     }
 
                     //switch (mbApiInterface.Player_GetPlayState())
