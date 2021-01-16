@@ -238,6 +238,10 @@ namespace MusicBeePlugin
                         // Get all scrobbles.
                         int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds; // Get current time in epoch, needed to "paginate" the recived scrobbles.
 
+
+                        // Create the folder where the scrobble cache will be stored.
+                        Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
+
                         // Stop if the number of received scrobbles is greater or equal to the total scrobbles.
                         // The number can be greater if one or more scrobbles is submitted before the complete history is received.
                         while (allScrobblesList.Count < listenCount)
@@ -275,8 +279,13 @@ namespace MusicBeePlugin
                                 string trackName = trackMetadata.Value<string>("track_name");
                                 string releaseName = trackMetadata.Value<string>("release_name");
 
-                                // And add it to the scrobble list.
+                                // Add it to the scrobble list.
                                 allScrobblesList.Add(new Listen(artistName, trackName, releaseName));
+
+                                // And cache it.
+                                File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "cache.txt"), getTimestamp + "," + artistName + "," + releaseName + ","
+                                                                                                            + trackName + Environment.NewLine);
+                                // TODO: file write error handling.
                             }
                         }
 
