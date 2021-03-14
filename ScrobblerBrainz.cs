@@ -37,7 +37,7 @@ namespace MusicBeePlugin
         public string track = "";
         public string release = "";
 
-        // Object definition for storingthe retrivied listens.
+        // Class definition for storing the retrievied listens.
         public class Listen
         {
             public string artist_name;
@@ -53,6 +53,9 @@ namespace MusicBeePlugin
                 release_name = releaseName;
             }
         }
+
+        // List declaration for all retrieved listens.
+        List<Listen> allScrobblesList = new List<Listen>();
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -147,8 +150,22 @@ namespace MusicBeePlugin
         }
 
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
-        public void Close(PluginCloseReason reason)
+        public void Close(PluginCloseReason closeReason)
         {
+            // Cache the scrobble history to a file on close.
+            if(closeReason == PluginCloseReason.MusicBeeClosing && playCountSync)
+            {
+                // Get the MusicBee settings path.                
+                string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
+
+                // Create the folder where the scrobble cache will be stored.
+                Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
+
+                // Convert the so far retrieved scrobble history to JSON and save it to a file.
+                string scrobbleHistoryBuffer = JsonConvert.SerializeObject(allScrobblesList);
+                File.WriteAllText(String.Concat(dataPath, settingsSubfolder, "cache.txt"), scrobbleHistoryBuffer);
+                // TODO: file write error handling.
+            }
         }
 
         // uninstall this plugin - clean up any persisted files
@@ -222,9 +239,6 @@ namespace MusicBeePlugin
                         // Get all files from the library. It's an array of file paths.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
-                        // Declare a list of all scrobbles.
-                        List<Listen> allScrobblesList = new List<Listen>();
-
                         // Get the listen count, it is needed to know how many listens shold be gotten.
                         var getListenCountResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listen-count");
 
@@ -237,10 +251,6 @@ namespace MusicBeePlugin
 
                         // Get all scrobbles.
                         int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds; // Get current time in epoch, needed to "paginate" the recived scrobbles.
-
-
-                        // Create the folder where the scrobble cache will be stored.
-                        Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
 
                         // Stop if the number of received scrobbles is greater or equal to the total scrobbles.
                         // The number can be greater if one or more scrobbles is submitted before the complete history is received.
@@ -281,11 +291,6 @@ namespace MusicBeePlugin
 
                                 // Add it to the scrobble list.
                                 allScrobblesList.Add(new Listen(artistName, trackName, releaseName));
-
-                                // And cache it.
-                                File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "cache.txt"), getTimestamp + "," + artistName + "," + releaseName + ","
-                                                                                                            + trackName + Environment.NewLine);
-                                // TODO: file write error handling.
                             }
                         }
 
