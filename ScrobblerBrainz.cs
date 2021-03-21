@@ -270,7 +270,9 @@ namespace MusicBeePlugin
                         // Get all scrobbles.
                         int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds; // Get current time in epoch, needed to "paginate" the recived scrobbles.
 
+                        // Get the scrobble count from ListenBrainz            
                         ListenCount listenCount = new ListenCount(httpClient);
+                        
                         // Stop if the number of received scrobbles is greater or equal to the total scrobbles.
                         // The number can be greater if one or more scrobbles is submitted before the complete history is received.
                         while (allScrobblesList.Count < listenCount.listenCount)
@@ -313,7 +315,7 @@ namespace MusicBeePlugin
                             }
 
                             // Check if there were any new scrobbles during the history retrieval.
-                            if (allScrobblesList.Count < listenCount.listenCount)
+                            if (allScrobblesList.Count == listenCount.listenCount)
                             {
                                 listenCount.Refresh();
                             }
