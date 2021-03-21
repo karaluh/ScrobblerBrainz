@@ -310,6 +310,12 @@ namespace MusicBeePlugin
                                 // Add it to the scrobble list.
                                 allScrobblesList.Add(new Listen(artistName, trackName, releaseName));
                             }
+
+                            // Check if there were any new scrobbles during the history retrieval.
+                            if (allScrobblesList.Count < listenCount.listenCount)
+                            {
+                                listenCount.Refresh();
+                            }
                         }
 
                         // Count the duplicates in the scrobble history.
