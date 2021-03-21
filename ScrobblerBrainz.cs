@@ -54,6 +54,33 @@ namespace MusicBeePlugin
             }
         }
 
+        // Class definition for storing the ListenBrainz listen count
+        public class ListenCount
+        {
+            public int listenCount;
+            HttpClient httpClient;
+
+            public ListenCount(HttpClient httpClient)
+            {
+                Refresh();
+            }
+            
+            // Refresh the listen count
+            public int Refresh()
+            {
+                // Get the listen count, it is needed to know how many listens shold be gotten.
+                var getListenCountResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listen-count");
+
+                // TODO: HTTP error handling.
+
+                // Deserialize the total listen count for the user.
+                string listenCountResponseContent = getListenCountResponse.Result.Content.ReadAsStringAsync().Result;
+                dynamic listenCountJson = JsonConvert.DeserializeObject(listenCountResponseContent);
+                listenCount = listenCountJson.payload.Value<int>("count");
+                return listenCount;
+            }
+        }
+
         // List declaration for all retrieved listens.
         List<Listen> allScrobblesList = new List<Listen>();
 
@@ -239,22 +266,13 @@ namespace MusicBeePlugin
                         // Get all files from the library. It's an array of file paths.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
-                        // Get the listen count, it is needed to know how many listens shold be gotten.
-                        var getListenCountResponse = httpClient.GetAsync("https://api.listenbrainz.org/1/user/ScrobblerBrainz/listen-count");
-
-                        // TODO: HTTP error handling.
-
-                        // Deserialize the total listen count for the user.
-                        string listenCountResponseContent = getListenCountResponse.Result.Content.ReadAsStringAsync().Result;
-                        dynamic listenCountJson = JsonConvert.DeserializeObject(listenCountResponseContent);
-                        int listenCount = listenCountJson.payload.Value<int>("count");
-
                         // Get all scrobbles.
                         int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds; // Get current time in epoch, needed to "paginate" the recived scrobbles.
 
+                        ListenCount listenCount = new ListenCount(httpClient);
                         // Stop if the number of received scrobbles is greater or equal to the total scrobbles.
                         // The number can be greater if one or more scrobbles is submitted before the complete history is received.
-                        while (allScrobblesList.Count < listenCount)
+                        while (allScrobblesList.Count < listenCount.listenCount)
                         {
                             // Get a portion of the scrobble history. Values for "count" and "time_range" parameters are set to maximum what the API allows.
                             // "max_ts" parameter is used to get the "next page" of scrobbles.
