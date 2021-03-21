@@ -58,10 +58,11 @@ namespace MusicBeePlugin
         public class ListenCount
         {
             public int listenCount;
-            HttpClient httpClient;
+            readonly HttpClient httpClient;
 
             public ListenCount(HttpClient httpClient)
             {
+                this.httpClient = httpClient;
                 Refresh();
             }
             
