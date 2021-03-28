@@ -193,6 +193,7 @@ namespace MusicBeePlugin
                 string scrobbleHistoryBuffer = JsonConvert.SerializeObject(allScrobblesList);
                 File.WriteAllText(String.Concat(dataPath, settingsSubfolder, "cache.txt"), scrobbleHistoryBuffer);
                 // TODO: file write error handling.
+                // TODO: lock allScrobblesList before saving to avoid it being written by scrobble retriving thread.
             }
         }
 
@@ -267,8 +268,19 @@ namespace MusicBeePlugin
                         // Get all files from the library. It's an array of file paths.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
-                        // Get all scrobbles.
-                        int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds; // Get current time in epoch, needed to "paginate" the recived scrobbles.
+                        // Read the scrobble cache if it exists.
+                        try
+                        {
+                            string scrobbleHistoryBuffer = File.ReadAllText(String.Concat(dataPath, settingsSubfolder, "cache.txt"));
+                            // TODO: handle file permission exceptions.
+                            allScrobblesList = JsonConvert.DeserializeObject<List<Listen>>(scrobbleHistoryBuffer);
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            // Do nothing, the cache doesn't exist.
+                        }
+                        // Get current time in epoch, needed to "paginate" the recived scrobbles.
+                        int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
 
                         // Get the scrobble count from ListenBrainz            
                         ListenCount listenCount = new ListenCount(httpClient);
