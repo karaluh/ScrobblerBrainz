@@ -270,20 +270,29 @@ namespace MusicBeePlugin
                         // Get all files from the library. It's an array of file paths.
                         mbApiInterface.Library_QueryFilesEx("< Conditions CombineMethod = \"All\" > <Condition Field=\"None\" Comparison=\"MatchesRegEx\" Value=\".* \" </ Conditions >", out allTracksArray);
 
+                        // Set a time marker that specifies till what point in time the scrobble history should be received. It is needed to "paginate" the recived scrobbles.
+                        int getTimestamp = 0;
+
                         // Read the scrobble cache if it exists.
                         try
                         {
                             string scrobbleHistoryBuffer = File.ReadAllText(String.Concat(dataPath, settingsSubfolder, "cache.txt"));
                             // TODO: handle file permission exceptions.
                             allScrobblesList = JsonConvert.DeserializeObject<List<Listen>>(scrobbleHistoryBuffer);
+                            
+                            // Set the time marker to the oldest scrobble in the cache.
+                            getTimestamp = allScrobblesList[allScrobblesList.Count - 1].last_listened;
                         }
                         catch (FileNotFoundException)
                         {
                             // Do nothing, the cache doesn't exist.
                         }
-                        // Get current time in epoch, needed to "paginate" the recived scrobbles.
-                        int getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
 
+                        // Set the time marker to the current time in epoch if it wasn't set while reading the cache. 
+                        if (getTimestamp == 0)
+                        {
+                            getTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
+                        }
                         // Get the scrobble count from ListenBrainz            
                         ListenCount listenCount = new ListenCount(httpClient);
                         
