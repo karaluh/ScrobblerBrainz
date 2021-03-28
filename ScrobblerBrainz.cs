@@ -43,14 +43,16 @@ namespace MusicBeePlugin
             public string artist_name;
             public string track_name;
             public string release_name;
+            public int last_listened;
             public int count = 0;
 
             // Constructor.
-            public Listen(string artistName, string trackName, string releaseName)
+            public Listen(string artistName, string trackName, string releaseName, int lastListened)
             { 
                 artist_name = artistName;
                 track_name = trackName;
                 release_name = releaseName;
+                last_listened = lastListened;
             }
         }
 
@@ -323,7 +325,7 @@ namespace MusicBeePlugin
                                 string releaseName = trackMetadata.Value<string>("release_name");
 
                                 // Add it to the scrobble list.
-                                allScrobblesList.Add(new Listen(artistName, trackName, releaseName));
+                                allScrobblesList.Add(new Listen(artistName, trackName, releaseName, getTimestamp));
                             }
 
                             // Check if there were any new scrobbles during the history retrieval.
