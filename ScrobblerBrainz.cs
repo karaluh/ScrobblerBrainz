@@ -192,10 +192,12 @@ namespace MusicBeePlugin
                 Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
 
                 // Convert the so far retrieved scrobble history to JSON and save it to a file.
-                string scrobbleHistoryBuffer = JsonConvert.SerializeObject(allScrobblesList);
-                File.WriteAllText(String.Concat(dataPath, settingsSubfolder, "cache.txt"), scrobbleHistoryBuffer);
-                // TODO: file write error handling.
-                // TODO: lock allScrobblesList before saving to avoid it being written by scrobble retriving thread.
+                lock (allScrobblesList)
+                {
+                    string scrobbleHistoryBuffer = JsonConvert.SerializeObject(allScrobblesList);
+                    File.WriteAllText(String.Concat(dataPath, settingsSubfolder, "cache.txt"), scrobbleHistoryBuffer);
+                    // TODO: file write error handling.
+                }
             }
         }
 
@@ -334,7 +336,10 @@ namespace MusicBeePlugin
                                 string releaseName = trackMetadata.Value<string>("release_name");
 
                                 // Add it to the scrobble list.
-                                allScrobblesList.Add(new Listen(artistName, trackName, releaseName, getTimestamp));
+                                lock(allScrobblesList)
+                                {
+                                    allScrobblesList.Add(new Listen(artistName, trackName, releaseName, getTimestamp));
+                                }
                             }
 
                             // Check if there were any new scrobbles during the history retrieval.
