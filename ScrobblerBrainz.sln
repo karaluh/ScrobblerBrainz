@@ -1,21 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.489
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScrobblerBrainz", "ScrobblerBrainz.csproj", "{F5D46BA1-6F21-40EF-9695-46105CCACD08}"
 EndProject
-Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "MusicBee", "..\MusicBee\MusicBee.exe", "{0D30E913-3DB0-41F4-B555-EB0DFE97ADA9}"
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "MusicBee", "MusicBee\MusicBee.exe", "{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
-		Executable = C:\Users\karaluh\Desktop\MusicBee\MusicBee.exe
-		RemoteMachine = BATTLECRUISER
-		StartingDirectory = C:\Users\karaluh\Desktop\MusicBee
+		Executable = O:\Repozytoria\karaluh\ScrobblerBrainz\MusicBee\MusicBee.exe
+		RemoteMachine = GORGON
+		StartingDirectory = O:\Repozytoria\karaluh\ScrobblerBrainz\MusicBee
 		Environment = Default
 		LaunchingEngine = 00000000-0000-0000-0000-000000000000
 		UseLegacyDebugEngines = No
 		LaunchSQLEngine = No
 		AttachLaunchAction = No
+		IORedirection = Auto
 	EndProjectSection
 EndProject
 Global
@@ -34,10 +35,10 @@ Global
 		{F5D46BA1-6F21-40EF-9695-46105CCACD08}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F5D46BA1-6F21-40EF-9695-46105CCACD08}.Release|x86.ActiveCfg = Release|x86
 		{F5D46BA1-6F21-40EF-9695-46105CCACD08}.Release|x86.Build.0 = Release|x86
-		{0D30E913-3DB0-41F4-B555-EB0DFE97ADA9}.Debug|Any CPU.ActiveCfg = Release|x86
-		{0D30E913-3DB0-41F4-B555-EB0DFE97ADA9}.Debug|x86.ActiveCfg = Release|x86
-		{0D30E913-3DB0-41F4-B555-EB0DFE97ADA9}.Release|Any CPU.ActiveCfg = Release|x86
-		{0D30E913-3DB0-41F4-B555-EB0DFE97ADA9}.Release|x86.ActiveCfg = Release|x86
+		{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}.Debug|Any CPU.ActiveCfg = Release|x86
+		{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}.Debug|x86.ActiveCfg = Release|x86
+		{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}.Release|Any CPU.ActiveCfg = Release|x86
+		{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}.Release|x86.ActiveCfg = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
