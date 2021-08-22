@@ -25,7 +25,7 @@ namespace MusicBeePlugin.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string userToken {
             get {
                 return ((string)(this["userToken"]));
