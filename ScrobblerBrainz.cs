@@ -84,7 +84,7 @@ namespace MusicBeePlugin
                 Label prompt = new Label();
                 prompt.AutoSize = true;
                 prompt.Location = new Point(0, 0);
-                prompt.Text = "ListenBrainz User token:";
+                prompt.Text = "ListenBrainz user token:";
                 userTokenTextBox = new TextBox();
                 userTokenTextBox.Bounds = new Rectangle(135, 0, 100, userTokenTextBox.Height);
                 userTokenTextBox.Text = userToken;
@@ -136,8 +136,7 @@ namespace MusicBeePlugin
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
 
-                    MessageBox.Show(Properties.Settings.Default.userToken);
-                    // Get the current playcount to see if it changes or the song was skipped.
+                    // Get the current playcount to see if it changes or if the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
 
                     // Re-scrobble any offline scrobbles.
@@ -151,7 +150,7 @@ namespace MusicBeePlugin
                                 try
                                 {
                                     submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
-                                    if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, remove the file.
+                                    if (submitListenResponse.Result.IsSuccessStatusCode) // If the re-scrobble succeedes, remove the file.
                                     {
                                         try
                                         {
@@ -172,7 +171,7 @@ namespace MusicBeePlugin
                     }
                     catch (DirectoryNotFoundException) // Handle the "no offline scroble directory" exception.
                     {
-                        // Do nothing, there's nothing to re-scrobble.
+                        // Do nothing, there's just nothing to re-scrobble.
                     }
 
                     //switch (mbApiInterface.Player_GetPlayState())
@@ -189,7 +188,7 @@ namespace MusicBeePlugin
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
 
-                    // Get the current playcount to see if it changes or the song was skipped.
+                    // Get the current playcount to see if it changes or if the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
                     break;
 
