@@ -137,32 +137,40 @@ namespace MusicBeePlugin
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
 
                     // Re-scrobble any offline scrobbles.
-                    string[] offlineScrobbles = Directory.GetFiles(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
-                    for (int i = 0; i < offlineScrobbles.Length; i++)
+                    try
                     {
-                        if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
+                        string[] offlineScrobbles = Directory.GetFiles(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
+                        for (int i = 0; i < offlineScrobbles.Length; i++)
                         {
-                            try
+                            if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
                             {
-                                submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
-                                if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, remove the file.
+                                try
                                 {
-                                    try
+                                    submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
+                                    if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, remove the file.
                                     {
-                                        File.Delete(offlineScrobbles[i]);
-                                    }
-                                    catch (IOException) // Handle the case where the saved scrobble is opened.
-                                    {
-                                        // Do nothing, the file will be removed on the next run.
+                                        try
+                                        {
+                                            File.Delete(offlineScrobbles[i]);
+                                        }
+                                        catch (IOException) // Handle the case where the saved scrobble is opened.
+                                        {
+                                            // Do nothing, the file will be removed on the next run.
+                                        }
                                     }
                                 }
-                            }
-                            catch // Handle the connectivity issues exception.
-                            {
-                                // Do nothing, the file will be re-scrobbled on the next run.
+                                catch // Handle the connectivity issues exception.
+                                {
+                                    // Do nothing, the file will be re-scrobbled on the next run.
+                                }
                             }
                         }
                     }
+                    catch (DirectoryNotFoundException) // Handle the "no offline scroble directory" exception.
+                    {
+                        // Do nothing, there's nothing to re-scrobble.
+                    }
+
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
                     //    case PlayState.Playing:
