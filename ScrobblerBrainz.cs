@@ -44,7 +44,7 @@ namespace MusicBeePlugin
             about.Type = PluginType.General;
 
             // Plugin version:
-            about.VersionMajor = 0;
+            about.VersionMajor = 1;
             about.VersionMinor = 1;
             about.Revision = 0;
 
