@@ -81,14 +81,16 @@ namespace MusicBeePlugin
             if (panelHandle != IntPtr.Zero)
             {
                 Panel configPanel = (Panel)Panel.FromHandle(panelHandle);
-                Label prompt = new Label();
-                prompt.AutoSize = true;
-                prompt.Location = new Point(0, 0);
-                prompt.Text = "ListenBrainz user token:";
-                userTokenTextBox = new TextBox();
-                userTokenTextBox.Bounds = new Rectangle(135, 0, 100, userTokenTextBox.Height);
+                Label userTokenLabel = new Label();
+                userTokenLabel.AutoSize = true;
+                userTokenLabel.Location = new Point(0, 4);
+                userTokenLabel.Text = "ListenBrainz user token:";
+                TextBox userTokenTextBox = new TextBox();
+                userTokenTextBox.Location = new Point(userTokenLabel.Width + 35, 0);
+                userTokenTextBox.MaxLength = 36;
+                userTokenTextBox.Width = 100;
                 userTokenTextBox.Text = userToken;
-                configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox });
+                configPanel.Controls.AddRange(new Control[] { userTokenLabel, userTokenTextBox });
             }
             return false;
         }
