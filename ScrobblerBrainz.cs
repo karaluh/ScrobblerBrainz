@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
 
+
 namespace MusicBeePlugin
 {
     public partial class Plugin
@@ -22,7 +23,7 @@ namespace MusicBeePlugin
 
         // Settings:
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
-        public string settingsFile = "usertoken"; // Plugin settings file.
+        public string settingsFile = "usertoken"; // Old plugin settings file.
 
         // Scrobble metadata:
         TimeSpan timestamp;
@@ -53,18 +54,19 @@ namespace MusicBeePlugin
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
             about.ConfigurationPanelHeight = 30;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
-            try // Read the user token from a file.
+            // Migrate the old config to XML if it exists
+            if(File.Exists(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile)))
             {
-                userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
+                // Get the user token from the file and save it in the XML.
+                Properties.Settings.Default.userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
+                Properties.Settings.Default.Save();
+
+                // Remove the old file.
+                File.Delete(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
             }
-            catch (FileNotFoundException)
-            {
-                // No need to do anything, it means the file with the user token isn't created yet.
-            }
-            catch (DirectoryNotFoundException)
-            {
-                // No need to do anything, it means the directory with the user token isn't created yet.
-            }
+
+            // Read the user token from settings.
+            userToken = Properties.Settings.Default.userToken;
 
             return about;
         }
@@ -95,11 +97,12 @@ namespace MusicBeePlugin
         // its up to you to figure out whether anything has changed and needs updating
         public void SaveSettings()
         {
-            // save any persistent settings in a sub-folder of this path
-            string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
-            Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
+            // Update the user token in case it was changed by the user.
             userToken = userTokenTextBox.Text;
-            File.WriteAllText(String.Concat(dataPath, settingsSubfolder, settingsFile), userToken); // Save the user token to a file.
+
+            // Save the user token in the XML.
+            Properties.Settings.Default.userToken = userToken;
+            Properties.Settings.Default.Save();
         }
 
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
@@ -133,6 +136,7 @@ namespace MusicBeePlugin
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
 
+                    MessageBox.Show(Properties.Settings.Default.userToken);
                     // Get the current playcount to see if it changes or the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
 
@@ -215,6 +219,9 @@ namespace MusicBeePlugin
                                 {
                                     // Log the timestamp, the failed scrobble and the error message in the error file.
                                     string errorTimestamp = DateTime.Now.ToString();
+                                    
+                                    // Create the folder where the error log will be stored.
+                                    Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
                                                                                                                 + submitListenJson + Environment.NewLine);
                                     File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
