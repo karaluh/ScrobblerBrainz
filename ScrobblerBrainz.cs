@@ -88,7 +88,7 @@ namespace MusicBeePlugin
                 TextBox userTokenTextBox = new TextBox();
                 userTokenTextBox.Location = new Point(userTokenLabel.Width + 35, 0);
                 userTokenTextBox.MaxLength = 36;
-                userTokenTextBox.Width = 100;
+                userTokenTextBox.Width = 300;
                 userTokenTextBox.BackColor = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputControl,
                                                                                                         ElementState.ElementStateDefault,
                                                                                                         ElementComponent.ComponentBackground));
