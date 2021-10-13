@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScrobblerBrainz", "ScrobblerBrainz.csproj", "{F5D46BA1-6F21-40EF-9695-46105CCACD08}"
 EndProject
-Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "MusicBee", "MusicBee\MusicBee.exe", "{9239CA07-5DEB-40B0-AD18-391DB89AAD4B}"
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "MusicBee", "MusicBee\MusicBee.exe", "{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
 		Executable = O:\Repozytoria\karaluh\ScrobblerBrainz\MusicBee\MusicBee.exe
@@ -35,10 +35,10 @@ Global
 		{F5D46BA1-6F21-40EF-9695-46105CCACD08}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F5D46BA1-6F21-40EF-9695-46105CCACD08}.Release|x86.ActiveCfg = Release|x86
 		{F5D46BA1-6F21-40EF-9695-46105CCACD08}.Release|x86.Build.0 = Release|x86
-		{9239CA07-5DEB-40B0-AD18-391DB89AAD4B}.Debug|Any CPU.ActiveCfg = Release|x86
-		{9239CA07-5DEB-40B0-AD18-391DB89AAD4B}.Debug|x86.ActiveCfg = Release|x86
-		{9239CA07-5DEB-40B0-AD18-391DB89AAD4B}.Release|Any CPU.ActiveCfg = Release|x86
-		{9239CA07-5DEB-40B0-AD18-391DB89AAD4B}.Release|x86.ActiveCfg = Release|x86
+		{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}.Debug|Any CPU.ActiveCfg = Release|x86
+		{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}.Debug|x86.ActiveCfg = Release|x86
+		{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}.Release|Any CPU.ActiveCfg = Release|x86
+		{42C6909A-CFF8-40B0-A193-E99D8B8D5D90}.Release|x86.ActiveCfg = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -87,6 +87,8 @@ namespace MusicBeePlugin
         // List declaration for all retrieved listens.
         List<Listen> allScrobblesList = new List<Listen>();
 
+        string previousPlaycount;
+
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
             mbApiInterface = new MusicBeeApiInterface();
@@ -99,7 +101,7 @@ namespace MusicBeePlugin
             about.Type = PluginType.General;
 
             // Plugin version:
-            about.VersionMajor = 0;
+            about.VersionMajor = 1;
             about.VersionMinor = 1;
             about.Revision = 0;
 
@@ -136,14 +138,21 @@ namespace MusicBeePlugin
             if (panelHandle != IntPtr.Zero)
             {
                 Panel configPanel = (Panel)Panel.FromHandle(panelHandle);
-                configPanel.AutoSize = true;
-                Label prompt = new Label();
-                prompt.AutoSize = true;
-                prompt.Location = new Point(0, 0);
-                prompt.Text = "ListenBrainz User token:";
-                userTokenTextBox = new TextBox();
-                //userTokenTextBox.Size = new Size(104, 16);
-                userTokenTextBox.Bounds = new Rectangle(135, 0, 100, userTokenTextBox.Height);
+                Label userTokenLabel = new Label();
+                userTokenLabel.AutoSize = true;
+                userTokenLabel.Location = new Point(0, 4);
+                userTokenLabel.Text = "ListenBrainz user token:";
+                TextBox userTokenTextBox = new TextBox();
+                userTokenTextBox.Location = new Point(userTokenLabel.Width + 35, 0);
+                userTokenTextBox.MaxLength = 36;
+                userTokenTextBox.Width = 300;
+                userTokenTextBox.BackColor = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputControl,
+                                                                                                        ElementState.ElementStateDefault,
+                                                                                                        ElementComponent.ComponentBackground));
+                userTokenTextBox.ForeColor = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputControl,
+                                                                                                        ElementState.ElementStateDefault,
+                                                                                                        ElementComponent.ComponentForeground));
+                userTokenTextBox.BorderStyle = BorderStyle.FixedSingle;
                 userTokenTextBox.Text = userToken;
 
                 // Play count sync related controls.
@@ -227,6 +236,9 @@ namespace MusicBeePlugin
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
 
+                    // Get the current playcount to see if it changes or if the song was skipped.
+                    previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
+
                     // Re-scrobble any offline scrobbles.
                     try
                     {
@@ -238,7 +250,7 @@ namespace MusicBeePlugin
                                 try
                                 {
                                     submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
-                                    if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, remove the file.
+                                    if (submitListenResponse.Result.IsSuccessStatusCode) // If the re-scrobble succeedes, remove the file.
                                     {
                                         try
                                         {
@@ -257,9 +269,9 @@ namespace MusicBeePlugin
                             }
                         }
                     }
-                    catch (DirectoryNotFoundException)
+                    catch (DirectoryNotFoundException) // Handle the "no offline scroble directory" exception.
                     {
-                        // Do nothing, there are no offline scrobles to re-scrobble.
+                        // Do nothing, there's just nothing to re-scrobble.
                     }
 
                     // Sync play count from ListenBrainz if this setting is enabled.
@@ -404,10 +416,14 @@ namespace MusicBeePlugin
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
+
+                    // Get the current playcount to see if it changes or if the song was skipped.
+                    previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
                     break;
 
-                case NotificationType.PlayCountersChanged: // Scrobble the track when playcount is changed.
-                    if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
+                case NotificationType.PlayCountersChanged: // This is emitted each time either a play count OR a skip count increases.
+                    // Scrobble the track but only if the user token is configured and the song wasn't skipped.
+                    if (!String.IsNullOrEmpty(userToken) && !(previousPlaycount == mbApiInterface.Library_GetFileProperty(sourceFileUrl, FilePropertyType.PlayCount)))
                     {
                         postTimestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
 
