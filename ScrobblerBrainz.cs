@@ -154,22 +154,16 @@ namespace MusicBeePlugin
                                                                                                         ElementComponent.ComponentForeground));
                 userTokenTextBox.BorderStyle = BorderStyle.FixedSingle;
                 userTokenTextBox.Text = userToken;
-
-                // Play count sync related controls.
-                // Label.
-                Label playCountSyncLabel = new Label();
-                playCountSyncLabel.Location = new Point(0, 25);
-                playCountSyncLabel.AutoSize = true;
-                playCountSyncLabel.Text = "synchronise from ListenBrainz to your library on startup:";
-                // Check box.
-                playCountSyncCheckBox = new CheckBox();
-                playCountSyncCheckBox.Location = new Point(0, 43);
+          
+                // Play count sync check box.
+                CheckBox playCountSyncCheckBox = new CheckBox();
+                playCountSyncCheckBox.Location = new Point(0, 25);
                 playCountSyncCheckBox.AutoSize = true;
                 playCountSyncCheckBox.Text = "synchronise Play Count";
                 playCountSyncCheckBox.Checked = playCountSync;
-                
+
                 // Add all of the controls to the panel.
-                configPanel.Controls.AddRange(new Control[] { prompt, userTokenTextBox, playCountSyncLabel, playCountSyncCheckBox });
+                configPanel.Controls.AddRange(new Control[] { userTokenLabel, userTokenTextBox, playCountSyncCheckBox });
             }
             return false;
         }
