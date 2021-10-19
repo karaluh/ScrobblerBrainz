@@ -103,7 +103,7 @@ namespace MusicBeePlugin
             // Plugin version:
             about.VersionMajor = 1;
             about.VersionMinor = 1;
-            about.Revision = 0;
+            about.Revision = 1;
 
             about.MinInterfaceVersion = 30;
             about.MinApiRevision = 40;
@@ -142,7 +142,7 @@ namespace MusicBeePlugin
                 userTokenLabel.AutoSize = true;
                 userTokenLabel.Location = new Point(0, 4);
                 userTokenLabel.Text = "ListenBrainz user token:";
-                TextBox userTokenTextBox = new TextBox();
+                userTokenTextBox = new TextBox();
                 userTokenTextBox.Location = new Point(userTokenLabel.Width + 35, 0);
                 userTokenTextBox.MaxLength = 36;
                 userTokenTextBox.Width = 300;
