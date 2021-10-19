@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="userToken" Type="System.String" Scope="User">
-      <Value Profile="(Default)">test</Value>
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>
