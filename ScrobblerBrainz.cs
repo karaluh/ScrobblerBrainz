@@ -283,7 +283,7 @@ namespace MusicBeePlugin
         }
 
         public void SaveScrobble(string timestamp, string json)
-        {
+        { 
             // Create the folder where offline scrobbles will be stored.
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
             Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
