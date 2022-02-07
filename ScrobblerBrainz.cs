@@ -136,6 +136,58 @@ namespace MusicBeePlugin
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken); // Set the authorization headers.
             System.Threading.Tasks.Task<HttpResponseMessage> submitListenResponse;
 
+            void SubmitScrobble(string json) // Shared function for submitting JSON scrobbles.
+            {
+                for (int i = 0; i < 5; i++) // In case of temporary errors do up to 5 retries.
+                {
+                    try
+                    {
+                        submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(json, Encoding.UTF8, "application/json"));
+                        if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, exit the loop.
+                        {
+                            break;
+                        }
+                        else // If the scrobble fails save it for a later resubmission and log the error.
+                        {
+                            // Log the timestamp, the failed scrobble and the error message in the error file.
+                            string errorTimestamp = DateTime.Now.ToString();
+
+                            // Create the folder where the error log will be stored.
+                            Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
+                            File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
+                                                                                                        + json + Environment.NewLine);
+                            File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
+                                                                                                        + submitListenResponse.Result.Content.ReadAsStringAsync().Result + Environment.NewLine);
+                           
+                            if (json.Contains("\"listen_type\": \"single\"")) // Only execute if the listen type is single, no need to save playing_now attempts.
+                            {
+                                // In case there's a problem with the scrobble JSON, the error is permanent so do not retry.
+                                if (submitListenResponse.Result.StatusCode.ToString() == "BadRequest")
+                                {
+                                    // Save the scrobble to a file and exit the loop.
+                                    SaveScrobble(timestamp.TotalSeconds.ToString(), json);
+                                    break;
+                                }
+
+                                // If this is the last retry save the scrobble.
+                                if (i == 4)
+                                {
+                                    SaveScrobble(timestamp.TotalSeconds.ToString(), json);
+                                }
+                            }
+                        }
+                    }
+                    catch // When offline, save the scrobble for a later resubmission and exit the loop.
+                    {
+                        if (json.Contains("\"listen_type\": \"single\"")) // Same as above.
+                        {
+                            SaveScrobble(timestamp.TotalSeconds.ToString(), json);
+                        }
+                        break;
+                    }
+                }
+            }
+
             // Perform some action depending on the notification type.
             switch (type)
             {
@@ -199,6 +251,17 @@ namespace MusicBeePlugin
 
                     // Get the current playcount to see if it changes or if the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
+
+                    // Prepare the scrobble.
+                    if (!String.IsNullOrEmpty(userToken))
+                    {
+                        string nowPlayingJson = "{\"listen_type\": \"playing_now\", \"payload\": [ { \"track_metadata\": {\"artist_name\": \""
+                                                  + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
+                                                  + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
+                    
+                        SubmitScrobble(nowPlayingJson);
+                    }
+
                     break;
 
                 case NotificationType.PlayCountersChanged: // This is emitted each time either a play count OR a skip count increases.
@@ -213,49 +276,7 @@ namespace MusicBeePlugin
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
                                                   + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
 
-                        // Post the scrobble.
-                        for (int i = 0; i < 5; i++) // In case of temporary errors do up to 5 retries.
-                        {
-                            try
-                            {
-                                submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(submitListenJson, Encoding.UTF8, "application/json"));
-                                if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, exit the loop.
-                                {
-                                     break;
-                                }
-                                else // If the scrobble fails save it for a later resubmission and log the error.
-                                {
-                                    // Log the timestamp, the failed scrobble and the error message in the error file.
-                                    string errorTimestamp = DateTime.Now.ToString();
-                                    
-                                    // Create the folder where the error log will be stored.
-                                    Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
-                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
-                                                                                                                + submitListenJson + Environment.NewLine);
-                                    File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
-                                                                                                                + submitListenResponse.Result.Content.ReadAsStringAsync().Result + Environment.NewLine);
-
-                                    // In case there's a problem with the scrobble JSON, the error is permanent so do not retry.
-                                    if (submitListenResponse.Result.StatusCode.ToString() == "BadRequest")
-                                    {
-                                        // Save the scrobble to a file and exit the loop.
-                                        SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
-                                        break;
-                                    }
-
-                                    // If this is the last retry save the scrobble.
-                                    if (i == 4)
-                                    {
-                                        SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
-                                    }
-                                }
-                            }
-                            catch // When offline, save the scrobble for a later resubmission and exit the loop.
-                            {
-                                SaveScrobble(timestamp.TotalSeconds.ToString(), submitListenJson);
-                                break;
-                            }
-                        }
+                        SubmitScrobble(submitListenJson);
                     }
                     break;
             }
