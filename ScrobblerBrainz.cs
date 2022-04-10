@@ -8,7 +8,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
-
+using TagLib;
+using System.Diagnostics;
 
 namespace MusicBeePlugin
 {
@@ -19,7 +20,7 @@ namespace MusicBeePlugin
 
         // ListenBrainz user token.
         public string userToken;
-        public TextBox userTokenTextBox;
+        public System.Windows.Forms.TextBox userTokenTextBox;
 
         // Settings:
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
@@ -55,14 +56,14 @@ namespace MusicBeePlugin
             about.ConfigurationPanelHeight = 30;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
             // Migrate the old config to XML if it exists
-            if(File.Exists(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile)))
+            if (System.IO.File.Exists(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile)))
             {
                 // Get the user token from the file and save it in the XML.
-                Properties.Settings.Default.userToken = File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
+                Properties.Settings.Default.userToken = System.IO.File.ReadAllText(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
                 Properties.Settings.Default.Save();
 
                 // Remove the old file.
-                File.Delete(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
+                System.IO.File.Delete(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
             }
 
             // Read the user token from settings.
@@ -85,7 +86,7 @@ namespace MusicBeePlugin
                 userTokenLabel.AutoSize = true;
                 userTokenLabel.Location = new Point(0, 4);
                 userTokenLabel.Text = "ListenBrainz user token:";
-                userTokenTextBox = new TextBox();
+                userTokenTextBox = new System.Windows.Forms.TextBox();
                 userTokenTextBox.Location = new Point(userTokenLabel.Width + 35, 0);
                 userTokenTextBox.MaxLength = 36;
                 userTokenTextBox.Width = 300;
@@ -101,7 +102,7 @@ namespace MusicBeePlugin
             }
             return false;
         }
-       
+
         // called by MusicBee when the user clicks Apply or Save in the MusicBee Preferences screen.
         // its up to you to figure out whether anything has changed and needs updating
         public void SaveSettings()
@@ -154,11 +155,11 @@ namespace MusicBeePlugin
 
                             // Create the folder where the error log will be stored.
                             Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder));
-                            File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
+                            System.IO.File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
                                                                                                         + json + Environment.NewLine);
-                            File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
+                            System.IO.File.AppendAllText(String.Concat(dataPath, settingsSubfolder, "error.log"), errorTimestamp + " "
                                                                                                         + submitListenResponse.Result.Content.ReadAsStringAsync().Result + Environment.NewLine);
-                           
+
                             if (json.Contains("\"listen_type\": \"single\"")) // Only execute if the listen type is single, no need to save playing_now attempts.
                             {
                                 // In case there's a problem with the scrobble JSON, the error is permanent so do not retry.
@@ -188,6 +189,66 @@ namespace MusicBeePlugin
                 }
             }
 
+            string GenerateMbidJson()
+            {
+                string mbidJson = "";
+                var file = TagLib.File.Create(mbApiInterface.NowPlaying_GetFileUrl());
+                // FLAC: Xiph, FlacMetadata (likely Xiph)
+                // MP3: ID3v2
+                // APE: Ape
+
+                string[] trackArtistMbids = new string[0];
+
+                // Implementation of artist tags is dependent on how MBID tags are saved by MusicBrainz Picard and how TagLib# 2.2.2.0 exposes these tags.
+                // While one can technically, for example, have ID3 or APE inside of an AAC, this isn't how Picard saves MBIDs in tags, and I'm not going to implement anything out of MusicBrainz's standards.
+                // TODO: simplify all this code once a new version of TagLib# is released.
+
+                if (file.GetTag(TagTypes.Xiph) != null)
+                { // Xiph / Vorbis comments
+                    // TagLib# 2.2.0.0 does not support grabbing multiple artist MBIDs on Vorbis, so as a workaround they're grabbed directly.
+                    // This merged PR will allow this but TagLib# itself has not updated yet: https://github.com/mono/taglib-sharp/pull/253
+                    // this will be simplified once either TagLib# updates or MBIDs become retrievable in the MusicBee API.
+                    Debug.WriteLine("Vorbis tag format");
+                    var fileTags = (TagLib.Ogg.XiphComment)file.GetTag(TagLib.TagTypes.Xiph);
+                    trackArtistMbids = fileTags.GetField("MUSICBRAINZ_ARTISTID");
+                }
+                else if (file.GetTag(TagTypes.Id3v2) != null)
+                { // ID3v2 (MP3)
+                    // ID3v2.4 seems to be split into semicolons by TagLib#
+                    // ID3v2.3, it depends on the user. Picard supports slashes and semicolons, though commas have been added in case.
+                    Debug.WriteLine("ID3v2 tag format");
+                    if (file.Tag.MusicBrainzArtistId != null)
+                    {
+                        trackArtistMbids = file.Tag.MusicBrainzArtistId.Split(new Char[] { ';', '/', ',' });
+                    }
+                }
+                else if (file.GetTag(TagTypes.Ape) != null)
+                { // APEv2
+                    // APE seems to be split by TagLib# with commas.
+                    Debug.WriteLine("APEv2 tag format");
+                    trackArtistMbids = file.Tag.MusicBrainzArtistId.Split(new string[] { ", " }, StringSplitOptions.None);
+                }
+                // TODO: AAC support, once TagLib# updates.
+
+                if (trackArtistMbids.Length != 0)
+                {
+                    string trackArtistMbidJson = "\"artist_mbids\": [";
+                    foreach (string mbid in trackArtistMbids)
+                    {
+                        trackArtistMbidJson += "\"" + mbid.Trim() + "\",";
+                    }
+                    trackArtistMbidJson = trackArtistMbidJson.TrimEnd(',');
+                    trackArtistMbidJson += "], ";
+                    mbidJson += trackArtistMbidJson;
+                }
+
+                mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzTrackId)) ? String.Format("\"recording_mbid\": \"{0}\",", file.Tag.MusicBrainzTrackId) : "";
+                mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseId)) ? String.Format("\"release_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseId) : "";
+                mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseGroupId)) ? String.Format("\"release_group_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseGroupId) : "";
+                mbidJson += (file.Tag.Track != 0) ? String.Format("\"trackNumber\": \"{0}\",", file.Tag.Track) : "";
+                return mbidJson;
+            }
+
             // Perform some action depending on the notification type.
             switch (type)
             {
@@ -210,12 +271,12 @@ namespace MusicBeePlugin
                             {
                                 try
                                 {
-                                    submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
+                                    submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(System.IO.File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
                                     if (submitListenResponse.Result.IsSuccessStatusCode) // If the re-scrobble succeedes, remove the file.
                                     {
                                         try
                                         {
-                                            File.Delete(offlineScrobbles[i]);
+                                            System.IO.File.Delete(offlineScrobbles[i]);
                                         }
                                         catch (IOException) // Handle the case where the saved scrobble is opened.
                                         {
@@ -251,14 +312,15 @@ namespace MusicBeePlugin
 
                     // Get the current playcount to see if it changes or if the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
-
+                    GenerateMbidJson();
                     // Prepare the scrobble.
                     if (!String.IsNullOrEmpty(userToken))
                     {
                         string nowPlayingJson = "{\"listen_type\": \"playing_now\", \"payload\": [ { \"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
-                                                  + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
-                    
+                                                  + "\", \"additional_info\": {" + GenerateMbidJson() + "\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
+                        Debug.WriteLine(nowPlayingJson);
+
                         SubmitScrobble(nowPlayingJson);
                     }
 
@@ -274,7 +336,7 @@ namespace MusicBeePlugin
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
                                                   + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
-                                                  + "\", \"additional_info\": {\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
+                                                  + "\", \"additional_info\": {" + GenerateMbidJson() + "\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
 
                         SubmitScrobble(submitListenJson);
                     }
@@ -283,15 +345,15 @@ namespace MusicBeePlugin
         }
 
         public void SaveScrobble(string timestamp, string json)
-        { 
+        {
             // Create the folder where offline scrobbles will be stored.
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
             Directory.CreateDirectory(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
 
             // Save the scrobble.
-            File.WriteAllText(String.Concat(dataPath, settingsSubfolder, "scrobbles\\", timestamp, ".json"), json);
+            System.IO.File.WriteAllText(String.Concat(dataPath, settingsSubfolder, "scrobbles\\", timestamp, ".json"), json);
         }
-              
+
         // return an array of lyric or artwork provider names this plugin supports
         // the providers will be iterated through one by one and passed to the RetrieveLyrics/ RetrieveArtwork function in order set by the user in the MusicBee Tags(2) preferences screen until a match is found
         //public string[] GetProviders()
