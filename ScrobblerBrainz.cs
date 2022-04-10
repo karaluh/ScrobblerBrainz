@@ -312,7 +312,7 @@ namespace MusicBeePlugin
 
                     // Get the current playcount to see if it changes or if the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
-                    GenerateMbidJson();
+
                     // Prepare the scrobble.
                     if (!String.IsNullOrEmpty(userToken))
                     {
