@@ -193,43 +193,34 @@ namespace MusicBeePlugin
             {
                 string mbidJson = "";
                 var file = TagLib.File.Create(mbApiInterface.NowPlaying_GetFileUrl());
-                // FLAC: Xiph, FlacMetadata (likely Xiph)
-                // MP3: ID3v2
-                // APE: Ape
-
                 string[] trackArtistMbids = new string[0];
 
-                // Implementation of artist tags is dependent on how MBID tags are saved by MusicBrainz Picard and how TagLib# 2.2.2.0 exposes these tags.
-                // While one can technically, for example, have ID3 or APE inside of an AAC, this isn't how Picard saves MBIDs in tags, and I'm not going to implement anything out of MusicBrainz's standards.
+                // Implementation of artist tags is dependent on how MBID tags are saved by MusicBrainz Picard and how TagLib# 2.2.0.0 exposes these tags.
+                // While one can technically, for example, have ID3 or APE inside of an AAC, this isn't how Picard saves MBIDs in tags, and it's not a good idea to implement anything out of MusicBrainz's standards.
                 // TODO: simplify all this code once a new version of TagLib# is released.
 
                 if (file.GetTag(TagTypes.Xiph) != null)
                 { // Xiph / Vorbis comments
-                    // TagLib# 2.2.0.0 does not support grabbing multiple artist MBIDs on Vorbis, so as a workaround they're grabbed directly.
+                    // TagLib# 2.2.0.0 does not support grabbing multiple artist MBIDs on Vorbis, but they're still retrievable directly.
                     // This merged PR will allow this but TagLib# itself has not updated yet: https://github.com/mono/taglib-sharp/pull/253
                     // this will be simplified once either TagLib# updates or MBIDs become retrievable in the MusicBee API.
                     Debug.WriteLine("Vorbis tag format");
                     var fileTags = (TagLib.Ogg.XiphComment)file.GetTag(TagLib.TagTypes.Xiph);
                     trackArtistMbids = fileTags.GetField("MUSICBRAINZ_ARTISTID");
                 }
-                else if (file.GetTag(TagTypes.Id3v2) != null)
-                { // ID3v2 (MP3)
-                    // ID3v2.4 seems to be split into semicolons by TagLib#
-                    // ID3v2.3, it depends on the user. Picard supports slashes and semicolons, though commas have been added in case.
-                    Debug.WriteLine("ID3v2 tag format");
+                else
+                {
+                    // TagLib# 2.2.0.0 seems to have inconsistent ways of presenting multiple artist MBIDs.
+                    // ID3v2.4 seems to be split into semicolons by TagLib#, APE uses commas
+                    // Other codecs seem to only support one (e.g. MP4, ASF).
+                    // MKA is not officially supported by MusicBrainz Picard.
                     if (file.Tag.MusicBrainzArtistId != null)
                     {
                         trackArtistMbids = file.Tag.MusicBrainzArtistId.Split(new Char[] { ';', '/', ',' });
                     }
                 }
-                else if (file.GetTag(TagTypes.Ape) != null)
-                { // APEv2
-                    // APE seems to be split by TagLib# with commas.
-                    Debug.WriteLine("APEv2 tag format");
-                    trackArtistMbids = file.Tag.MusicBrainzArtistId.Split(new string[] { ", " }, StringSplitOptions.None);
-                }
-                // TODO: AAC support, once TagLib# updates.
 
+                // Make the artist MBID JSON
                 if (trackArtistMbids.Length != 0)
                 {
                     string trackArtistMbidJson = "\"artist_mbids\": [";
