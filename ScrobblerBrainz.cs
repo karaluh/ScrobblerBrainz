@@ -9,7 +9,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
 using TagLib;
-using System.Diagnostics;
 
 namespace MusicBeePlugin
 {
@@ -204,7 +203,6 @@ namespace MusicBeePlugin
                     // TagLib# 2.2.0.0 does not support grabbing multiple artist MBIDs on Vorbis, but they're still retrievable directly.
                     // This merged PR will allow this but TagLib# itself has not updated yet: https://github.com/mono/taglib-sharp/pull/253
                     // this will be simplified once either TagLib# updates or MBIDs become retrievable in the MusicBee API.
-                    Debug.WriteLine("Vorbis tag format");
                     var fileTags = (TagLib.Ogg.XiphComment)file.GetTag(TagLib.TagTypes.Xiph);
                     trackArtistMbids = fileTags.GetField("MUSICBRAINZ_ARTISTID");
                 }
@@ -310,8 +308,6 @@ namespace MusicBeePlugin
                         string nowPlayingJson = "{\"listen_type\": \"playing_now\", \"payload\": [ { \"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
                                                   + "\", \"additional_info\": {" + GenerateMbidJson() + "\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
-                        Debug.WriteLine(nowPlayingJson);
-
                         SubmitScrobble(nowPlayingJson);
                     }
 
