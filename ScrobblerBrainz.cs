@@ -30,6 +30,7 @@ namespace MusicBeePlugin
         public string artist = "";
         public string track = "";
         public string release = "";
+        public int duration_ms = 0;
 
         string previousPlaycount;
 
@@ -298,6 +299,7 @@ namespace MusicBeePlugin
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
+                    duration_ms = mbApiInterface.NowPlaying_GetDuration();
 
                     // Get the current playcount to see if it changes or if the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
@@ -307,7 +309,8 @@ namespace MusicBeePlugin
                     {
                         string nowPlayingJson = "{\"listen_type\": \"playing_now\", \"payload\": [ { \"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
-                                                  + "\", \"additional_info\": {" + GenerateMbidJson() + "\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
+                                                  + "\", \"additional_info\": {" + GenerateMbidJson() + "\"duration_ms\":" + duration_ms + "," +
+                                                  "\"media_player\": \"MusicBee\", \"submission_client\": \"ScrobblerBrainz\"} } } ] }"; // Set the scrobble JSON.
                         SubmitScrobble(nowPlayingJson);
                     }
 
@@ -323,7 +326,8 @@ namespace MusicBeePlugin
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
                                                   + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
-                                                  + "\", \"additional_info\": {" + GenerateMbidJson() + "\"listening_from\": \"MusicBee\"} } } ] }"; // Set the scrobble JSON.
+                                                  + "\", \"additional_info\": {" + GenerateMbidJson() + "\"duration_ms\":" + duration_ms + "," +
+                                                  "\"media_player\": \"MusicBee\", \"submission_client\": \"ScrobblerBrainz\"} } } ] }"; // Set the scrobble JSON.
 
                         SubmitScrobble(submitListenJson);
                     }
