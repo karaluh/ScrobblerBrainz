@@ -39,16 +39,17 @@ namespace MusicBeePlugin
             mbApiInterface = new MusicBeeApiInterface();
             mbApiInterface.Initialise(apiInterfacePtr);
             about.PluginInfoVersion = PluginInfoVersion;
+
+            // Plugin version:
+            about.VersionMajor = 2;
+            about.VersionMinor = 0;
+            about.Revision = 0;
+
             about.Name = "ScrobblerBrainz";
-            about.Description = "A scrobbler for ListenBrainz service";
+            about.Description = "A scrobbler for ListenBrainz service, version " + about.VersionMajor + "." + about.VersionMinor + "." + about.Revision;
             about.Author = "karaluh";
             about.TargetApplication = "";   //  the name of a Plugin Storage device or panel header for a dockable panel
             about.Type = PluginType.General;
-
-            // Plugin version:
-            about.VersionMajor = 1;
-            about.VersionMinor = 1;
-            about.Revision = 1;
 
             about.MinInterfaceVersion = 30;
             about.MinApiRevision = 40;
