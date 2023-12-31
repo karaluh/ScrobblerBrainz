@@ -11,6 +11,11 @@ A MusicBee plug-in to scrobble tracks to ListenBrainz.
 # Download
 https://github.com/karaluh/ScrobblerBrainz/releases/download/v1.1.0/mb_ScrobblerBrainz.dll
 
+# Requirements
+1. MusicBee
+1. .Net 4.6.2
+1. ListenBrainz account
+
 # Usage
 1. Get MusicBee https://getmusicbee.com/downloads/
 1. Get MusicBrainz account https://musicbrainz.org/register?uri=%2F
