@@ -329,7 +329,7 @@ namespace MusicBeePlugin
                     {
                         // Prepare the scrobble.
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
-                                                  + (int)timestamp.ToUnixTimeSeconds() + ",\"track_metadata\": {\"artist_name\": \""
+                                                  + timestamp.ToUnixTimeSeconds() + ",\"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
                                                   + "\", \"additional_info\": {" + GenerateMbidJson() + "\"duration_ms\":" + duration_ms + "," +
                                                   "\"media_player\": \"MusicBee\", \"submission_client\": \"ScrobblerBrainz\"} } } ] }"; // Set the scrobble JSON.
