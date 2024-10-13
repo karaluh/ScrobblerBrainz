@@ -26,7 +26,7 @@ namespace MusicBeePlugin
         public string settingsFile = "usertoken"; // Old plugin settings file.
 
         // Scrobble metadata:
-        TimeSpan timestamp;
+        DateTimeOffset timestamp;
         public string artist = "";
         public string track = "";
         public string release = "";
@@ -167,14 +167,14 @@ namespace MusicBeePlugin
                                 if (submitListenResponse.Result.StatusCode.ToString() == "BadRequest")
                                 {
                                     // Save the scrobble to a file and exit the loop.
-                                    SaveScrobble(timestamp.TotalSeconds.ToString(), json);
+                                    SaveScrobble(timestamp.ToUnixTimeSeconds().ToString(), json);
                                     break;
                                 }
 
                                 // If this is the last retry save the scrobble.
                                 if (i == 4)
                                 {
-                                    SaveScrobble(timestamp.TotalSeconds.ToString(), json);
+                                    SaveScrobble(timestamp.ToUnixTimeSeconds().ToString(), json);
                                 }
                             }
                         }
@@ -183,7 +183,7 @@ namespace MusicBeePlugin
                     {
                         if (json.Contains("\"listen_type\": \"single\"")) // Same as above.
                         {
-                            SaveScrobble(timestamp.TotalSeconds.ToString(), json);
+                            SaveScrobble(timestamp.ToUnixTimeSeconds().ToString(), json);
                         }
                         break;
                     }
@@ -244,6 +244,11 @@ namespace MusicBeePlugin
             switch (type)
             {
                 case NotificationType.PluginStartup: // Perform startup initialisation.
+                    // Get the timestamp in epoch.
+                    // Offset by current playing position assuming the user didn't pause prior to the extension loading,
+                    // should be accurate enough 99% of the time.
+                    timestamp = DateTimeOffset.UtcNow - TimeSpan.FromMilliseconds(mbApiInterface.Player_GetPosition());
+
                     // Get the metadata of the track selected by MusicBee on startup to know what to scrobble.
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
@@ -297,6 +302,7 @@ namespace MusicBeePlugin
                     break;
 
                 case NotificationType.TrackChanged: // Update the metadata on track change.
+                    timestamp = DateTimeOffset.UtcNow; // Get the timestamp in epoch.
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
@@ -321,11 +327,9 @@ namespace MusicBeePlugin
                     // Scrobble the track but only if the user token is configured and the song wasn't skipped.
                     if (!String.IsNullOrEmpty(userToken) && !(previousPlaycount == mbApiInterface.Library_GetFileProperty(sourceFileUrl, FilePropertyType.PlayCount)))
                     {
-                        timestamp = DateTime.UtcNow - new DateTime(1970, 1, 1); // Get the timestamp in epoch.
-
                         // Prepare the scrobble.
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
-                                                  + (int)timestamp.TotalSeconds + ",\"track_metadata\": {\"artist_name\": \""
+                                                  + timestamp.ToUnixTimeSeconds() + ",\"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
                                                   + "\", \"additional_info\": {" + GenerateMbidJson() + "\"duration_ms\":" + duration_ms + "," +
                                                   "\"media_player\": \"MusicBee\", \"submission_client\": \"ScrobblerBrainz\"} } } ] }"; // Set the scrobble JSON.
