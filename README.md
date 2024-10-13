@@ -8,7 +8,7 @@ A MusicBee plug-in to scrobble tracks to ListenBrainz.
 1. No feature to disable podcast scrobbling.
 
 # Download
-https://github.com/karaluh/ScrobblerBrainz/releases/download/v2.0.0/mb_ScrobblerBrainz.zip
+https://github.com/karaluh/ScrobblerBrainz/releases/download/v2.0.1/mb_ScrobblerBrainz.zip
 
 # Usage
 1. Get MusicBee https://getmusicbee.com/downloads/
