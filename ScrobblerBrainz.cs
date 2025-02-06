@@ -21,6 +21,10 @@ namespace MusicBeePlugin
         public string userToken;
         public System.Windows.Forms.TextBox userTokenTextBox;
 
+        // Custom API URL.
+        public string customApiUrl = "https://api.listenbrainz.org/1/submit-listens";
+        public System.Windows.Forms.TextBox customApiUrlTextBox;
+        
         // Settings:
         public string settingsSubfolder = "ScrobblerBrainz\\"; // Plugin settings subfolder.
         public string settingsFile = "usertoken"; // Old plugin settings file.
@@ -54,7 +58,7 @@ namespace MusicBeePlugin
             about.MinInterfaceVersion = 30;
             about.MinApiRevision = 40;
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
-            about.ConfigurationPanelHeight = 30;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
+            about.ConfigurationPanelHeight = 60;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
             // Migrate the old config to XML if it exists
             if (System.IO.File.Exists(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile)))
@@ -67,8 +71,9 @@ namespace MusicBeePlugin
                 System.IO.File.Delete(String.Concat(mbApiInterface.Setting_GetPersistentStoragePath(), settingsSubfolder, settingsFile));
             }
 
-            // Read the user token from settings.
+            // Read the user token and custom API URL from settings.
             userToken = Properties.Settings.Default.userToken;
+            customApiUrl = Properties.Settings.Default.customApiUrl;
 
             return about;
         }
@@ -89,7 +94,7 @@ namespace MusicBeePlugin
                 userTokenLabel.Text = "ListenBrainz user token:";
                 userTokenTextBox = new System.Windows.Forms.TextBox();
                 userTokenTextBox.Location = new Point(userTokenLabel.Width + 35, 0);
-                userTokenTextBox.MaxLength = 36;
+                // userTokenTextBox.MaxLength = 36;
                 userTokenTextBox.Width = 300;
                 userTokenTextBox.BackColor = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputControl,
                                                                                                         ElementState.ElementStateDefault,
@@ -99,7 +104,25 @@ namespace MusicBeePlugin
                                                                                                         ElementComponent.ComponentForeground));
                 userTokenTextBox.BorderStyle = BorderStyle.FixedSingle;
                 userTokenTextBox.Text = userToken;
-                configPanel.Controls.AddRange(new Control[] { userTokenLabel, userTokenTextBox });
+                
+                // Custom API URL Label and TextBox
+                Label customApiUrlLabel = new Label();
+                customApiUrlLabel.AutoSize = true;
+                customApiUrlLabel.Location = new Point(0, 40);
+                customApiUrlLabel.Text = "Custom API URL:";
+                customApiUrlTextBox = new System.Windows.Forms.TextBox();
+                customApiUrlTextBox.Location = new Point(customApiUrlLabel.Width + 35, 40);
+                customApiUrlTextBox.Width = 300;
+                customApiUrlTextBox.BackColor = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputControl,
+                                                                                                           ElementState.ElementStateDefault,
+                                                                                                           ElementComponent.ComponentBackground));
+                customApiUrlTextBox.ForeColor = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputControl,
+                                                                                                           ElementState.ElementStateDefault,
+                                                                                                           ElementComponent.ComponentForeground));
+                customApiUrlTextBox.BorderStyle = BorderStyle.FixedSingle;
+                customApiUrlTextBox.Text = Properties.Settings.Default.customApiUrl;
+
+                configPanel.Controls.AddRange(new Control[] { userTokenLabel, userTokenTextBox, customApiUrlLabel, customApiUrlTextBox });
             }
             return false;
         }
@@ -113,6 +136,10 @@ namespace MusicBeePlugin
 
             // Save the user token in the XML.
             Properties.Settings.Default.userToken = userToken;
+            
+            // Save custom API URL
+            Properties.Settings.Default.customApiUrl = customApiUrlTextBox.Text;
+            
             Properties.Settings.Default.Save();
         }
 
@@ -144,7 +171,7 @@ namespace MusicBeePlugin
                 {
                     try
                     {
-                        submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(json, Encoding.UTF8, "application/json"));
+                        submitListenResponse = httpClient.PostAsync(Properties.Settings.Default.customApiUrl, new StringContent(json, Encoding.UTF8, "application/json"));
                         if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, exit the loop.
                         {
                             break;
@@ -267,7 +294,7 @@ namespace MusicBeePlugin
                             {
                                 try
                                 {
-                                    submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(System.IO.File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
+                                    submitListenResponse = httpClient.PostAsync(Properties.Settings.Default.customApiUrl, new StringContent(System.IO.File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
                                     if (submitListenResponse.Result.IsSuccessStatusCode) // If the re-scrobble succeedes, remove the file.
                                     {
                                         try
