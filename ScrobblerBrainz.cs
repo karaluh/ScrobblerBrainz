@@ -31,6 +31,7 @@ namespace MusicBeePlugin
         public string track = "";
         public string release = "";
         public int duration_ms = 0;
+        public string trackMbidJson = "";
 
         string previousPlaycount;
 
@@ -193,50 +194,59 @@ namespace MusicBeePlugin
             string GenerateMbidJson()
             {
                 string mbidJson = "";
-                var file = TagLib.File.Create(mbApiInterface.NowPlaying_GetFileUrl());
                 string[] trackArtistMbids = new string[0];
 
-                // Implementation of artist tags is dependent on how MBID tags are saved by MusicBrainz Picard and how TagLib# 2.2.0.0 exposes these tags.
-                // While one can technically, for example, have ID3 or APE inside of an AAC, this isn't how Picard saves MBIDs in tags, and it's not a good idea to implement anything out of MusicBrainz's standards.
-                // TODO: simplify all this code once a new version of TagLib# is released.
-
-                if (file.GetTag(TagTypes.Xiph) != null)
-                { // Xiph / Vorbis comments
-                    // TagLib# 2.2.0.0 does not support grabbing multiple artist MBIDs on Vorbis, but they're still retrievable directly.
-                    // This merged PR will allow this but TagLib# itself has not updated yet: https://github.com/mono/taglib-sharp/pull/253
-                    // this will be simplified once either TagLib# updates or MBIDs become retrievable in the MusicBee API.
-                    var fileTags = (TagLib.Ogg.XiphComment)file.GetTag(TagLib.TagTypes.Xiph);
-                    trackArtistMbids = fileTags.GetField("MUSICBRAINZ_ARTISTID");
-                }
-                else
+                try
                 {
-                    // TagLib# 2.2.0.0 seems to have inconsistent ways of presenting multiple artist MBIDs.
-                    // ID3v2.4 seems to be split into semicolons by TagLib#, APE uses commas
-                    // Other codecs seem to only support one (e.g. MP4, ASF).
-                    // MKA is not officially supported by MusicBrainz Picard.
-                    if (file.Tag.MusicBrainzArtistId != null)
+                    using (var file = TagLib.File.Create(mbApiInterface.NowPlaying_GetFileUrl()))
                     {
-                        trackArtistMbids = file.Tag.MusicBrainzArtistId.Split(new Char[] { ';', '/', ',' });
+                        // Implementation of artist tags is dependent on how MBID tags are saved by MusicBrainz Picard and how TagLib# 2.2.0.0 exposes these tags.
+                        // While one can technically, for example, have ID3 or APE inside of an AAC, this isn't how Picard saves MBIDs in tags, and it's not a good idea to implement anything out of MusicBrainz's standards.
+                        // TODO: simplify all this code once a new version of TagLib# is released.
+
+                        if (file.GetTag(TagTypes.Xiph) != null)
+                        { // Xiph / Vorbis comments
+                            // TagLib# 2.2.0.0 does not support grabbing multiple artist MBIDs on Vorbis, but they're still retrievable directly.
+                            // This merged PR will allow this but TagLib# itself has not updated yet: https://github.com/mono/taglib-sharp/pull/253
+                            // this will be simplified once either TagLib# updates or MBIDs become retrievable in the MusicBee API.
+                            var fileTags = (TagLib.Ogg.XiphComment)file.GetTag(TagLib.TagTypes.Xiph);
+                            trackArtistMbids = fileTags.GetField("MUSICBRAINZ_ARTISTID");
+                        }
+                        else
+                        {
+                            // TagLib# 2.2.0.0 seems to have inconsistent ways of presenting multiple artist MBIDs.
+                            // ID3v2.4 seems to be split into semicolons by TagLib#, APE uses commas
+                            // Other codecs seem to only support one (e.g. MP4, ASF).
+                            // MKA is not officially supported by MusicBrainz Picard.
+                            if (file.Tag.MusicBrainzArtistId != null)
+                            {
+                                trackArtistMbids = file.Tag.MusicBrainzArtistId.Split(new Char[] { ';', '/', ',' });
+                            }
+                        }
+
+                        // Make the artist MBID JSON
+                        if (trackArtistMbids.Length != 0)
+                        {
+                            string trackArtistMbidJson = "\"artist_mbids\": [";
+                            foreach (string mbid in trackArtistMbids)
+                            {
+                                trackArtistMbidJson += "\"" + mbid.Trim() + "\",";
+                            }
+                            trackArtistMbidJson = trackArtistMbidJson.TrimEnd(',');
+                            trackArtistMbidJson += "], ";
+                            mbidJson += trackArtistMbidJson;
+                        }
+
+                        mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzTrackId)) ? String.Format("\"recording_mbid\": \"{0}\",", file.Tag.MusicBrainzTrackId) : "";
+                        mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseId)) ? String.Format("\"release_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseId) : "";
+                        mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseGroupId)) ? String.Format("\"release_group_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseGroupId) : "";
+                        mbidJson += (file.Tag.Track != 0) ? String.Format("\"trackNumber\": \"{0}\",", file.Tag.Track) : "";
                     }
                 }
-
-                // Make the artist MBID JSON
-                if (trackArtistMbids.Length != 0)
+                catch (Exception) // MBIDs are optional: a file TagLib# can't read (stream, unsupported format, missing file...) must not prevent the scrobble.
                 {
-                    string trackArtistMbidJson = "\"artist_mbids\": [";
-                    foreach (string mbid in trackArtistMbids)
-                    {
-                        trackArtistMbidJson += "\"" + mbid.Trim() + "\",";
-                    }
-                    trackArtistMbidJson = trackArtistMbidJson.TrimEnd(',');
-                    trackArtistMbidJson += "], ";
-                    mbidJson += trackArtistMbidJson;
+                    return "";
                 }
-
-                mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzTrackId)) ? String.Format("\"recording_mbid\": \"{0}\",", file.Tag.MusicBrainzTrackId) : "";
-                mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseId)) ? String.Format("\"release_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseId) : "";
-                mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseGroupId)) ? String.Format("\"release_group_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseGroupId) : "";
-                mbidJson += (file.Tag.Track != 0) ? String.Format("\"trackNumber\": \"{0}\",", file.Tag.Track) : "";
                 return mbidJson;
             }
 
@@ -253,6 +263,7 @@ namespace MusicBeePlugin
                     artist = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist));
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
+                    trackMbidJson = GenerateMbidJson();
 
                     // Get the current playcount to see if it changes or if the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
@@ -307,6 +318,9 @@ namespace MusicBeePlugin
                     track = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle));
                     release = HttpUtility.JavaScriptStringEncode(mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album));
                     duration_ms = mbApiInterface.NowPlaying_GetDuration();
+                    // Read the MBIDs now: MusicBee notifies plugins asynchronously, so when PlayCountersChanged is handled
+                    // the now playing file can already be the next track.
+                    trackMbidJson = GenerateMbidJson();
 
                     // Get the current playcount to see if it changes or if the song was skipped.
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
@@ -316,7 +330,7 @@ namespace MusicBeePlugin
                     {
                         string nowPlayingJson = "{\"listen_type\": \"playing_now\", \"payload\": [ { \"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
-                                                  + "\", \"additional_info\": {" + GenerateMbidJson() + "\"duration_ms\":" + duration_ms + "," +
+                                                  + "\", \"additional_info\": {" + trackMbidJson + "\"duration_ms\":" + duration_ms + "," +
                                                   "\"media_player\": \"MusicBee\", \"submission_client\": \"ScrobblerBrainz\"} } } ] }"; // Set the scrobble JSON.
                         SubmitScrobble(nowPlayingJson);
                     }
@@ -331,7 +345,7 @@ namespace MusicBeePlugin
                         string submitListenJson = "{\"listen_type\": \"single\", \"payload\": [ { \"listened_at\": "
                                                   + timestamp.ToUnixTimeSeconds() + ",\"track_metadata\": {\"artist_name\": \""
                                                   + artist + "\", \"track_name\": \"" + track + "\", \"release_name\": \"" + release
-                                                  + "\", \"additional_info\": {" + GenerateMbidJson() + "\"duration_ms\":" + duration_ms + "," +
+                                                  + "\", \"additional_info\": {" + trackMbidJson + "\"duration_ms\":" + duration_ms + "," +
                                                   "\"media_player\": \"MusicBee\", \"submission_client\": \"ScrobblerBrainz\"} } } ] }"; // Set the scrobble JSON.
 
                         SubmitScrobble(submitListenJson);
