@@ -136,6 +136,9 @@ namespace MusicBeePlugin
             // Prepare the HTTP client instance for later.
             HttpClient httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", userToken); // Set the authorization headers.
+            // ListenBrainz blocks clients without a meaningful User-Agent: https://blog.metabrainz.org/2026/08/24/blocked-listenbrainz-services-user-agent-strings/
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(String.Format("ScrobblerBrainz/{0}.{1}.{2} ( https://github.com/karaluh/ScrobblerBrainz )",
+                                                                              about.VersionMajor, about.VersionMinor, about.Revision));
             System.Threading.Tasks.Task<HttpResponseMessage> submitListenResponse;
 
             void SubmitScrobble(string json) // Shared function for submitting JSON scrobbles.
