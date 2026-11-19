@@ -34,6 +34,8 @@ namespace MusicBeePlugin
 
         string previousPlaycount;
 
+        readonly object offlineScrobblesLock = new object();
+
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
             mbApiInterface = new MusicBeeApiInterface();
@@ -147,6 +149,8 @@ namespace MusicBeePlugin
                         submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(json, Encoding.UTF8, "application/json"));
                         if (submitListenResponse.Result.IsSuccessStatusCode) // If the scrobble succeedes, exit the loop.
                         {
+                            // ListenBrainz is reachable: send the listens saved while it wasn't, instead of waiting for the next MusicBee start.
+                            ResubmitOfflineScrobbles();
                             break;
                         }
                         else // If the scrobble fails save it for a later resubmission and log the error.
@@ -187,6 +191,61 @@ namespace MusicBeePlugin
                         }
                         break;
                     }
+                }
+            }
+
+            void ResubmitOfflineScrobbles()
+            {
+                // No user token, or another notification is already resubmitting them.
+                if (String.IsNullOrEmpty(userToken) || !System.Threading.Monitor.TryEnter(offlineScrobblesLock))
+                {
+                    return;
+                }
+
+                try
+                {
+                    string scrobblesPath = String.Concat(dataPath, settingsSubfolder, "scrobbles");
+                    if (!Directory.Exists(scrobblesPath))
+                    {
+                        return; // Nothing to re-scrobble.
+                    }
+
+                    string[] offlineScrobbles = Directory.GetFiles(scrobblesPath, "*.json");
+                    Array.Sort(offlineScrobbles); // Oldest first, the files are named after the listen timestamp.
+                    foreach (string offlineScrobble in offlineScrobbles)
+                    {
+                        HttpResponseMessage response = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(System.IO.File.ReadAllText(offlineScrobble), Encoding.UTF8, "application/json")).Result;
+                        try
+                        {
+                            if (response.IsSuccessStatusCode)
+                            {
+                                System.IO.File.Delete(offlineScrobble);
+                            }
+                            else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                            {
+                                // ListenBrainz will never accept it: keep it aside instead of resubmitting it forever.
+                                string rejectedPath = Path.Combine(scrobblesPath, "rejected");
+                                Directory.CreateDirectory(rejectedPath);
+                                System.IO.File.Move(offlineScrobble, Path.Combine(rejectedPath, Path.GetFileName(offlineScrobble)));
+                            }
+                            else
+                            {
+                                return; // ListenBrainz is having trouble, try again later.
+                            }
+                        }
+                        catch (IOException) // Handle the case where the saved scrobble is opened.
+                        {
+                            // Do nothing, the file will be handled on the next run.
+                        }
+                    }
+                }
+                catch // Handle the connectivity issues exception.
+                {
+                    // Do nothing, the files will be re-scrobbled on the next run.
+                }
+                finally
+                {
+                    System.Threading.Monitor.Exit(offlineScrobblesLock);
                 }
             }
 
@@ -258,39 +317,7 @@ namespace MusicBeePlugin
                     previousPlaycount = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.PlayCount);
 
                     // Re-scrobble any offline scrobbles.
-                    try
-                    {
-                        string[] offlineScrobbles = Directory.GetFiles(String.Concat(dataPath, settingsSubfolder, "scrobbles"));
-                        for (int i = 0; i < offlineScrobbles.Length; i++)
-                        {
-                            if (!String.IsNullOrEmpty(userToken)) // But only if the user token is configured.
-                            {
-                                try
-                                {
-                                    submitListenResponse = httpClient.PostAsync("https://api.listenbrainz.org/1/submit-listens", new StringContent(System.IO.File.ReadAllText(offlineScrobbles[i]), Encoding.UTF8, "application/json"));
-                                    if (submitListenResponse.Result.IsSuccessStatusCode) // If the re-scrobble succeedes, remove the file.
-                                    {
-                                        try
-                                        {
-                                            System.IO.File.Delete(offlineScrobbles[i]);
-                                        }
-                                        catch (IOException) // Handle the case where the saved scrobble is opened.
-                                        {
-                                            // Do nothing, the file will be removed on the next run.
-                                        }
-                                    }
-                                }
-                                catch // Handle the connectivity issues exception.
-                                {
-                                    // Do nothing, the file will be re-scrobbled on the next run.
-                                }
-                            }
-                        }
-                    }
-                    catch (DirectoryNotFoundException) // Handle the "no offline scroble directory" exception.
-                    {
-                        // Do nothing, there's just nothing to re-scrobble.
-                    }
+                    ResubmitOfflineScrobbles();
 
                     //switch (mbApiInterface.Player_GetPlayState())
                     //{
