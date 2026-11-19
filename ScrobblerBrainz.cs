@@ -240,7 +240,7 @@ namespace MusicBeePlugin
                         mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzTrackId)) ? String.Format("\"recording_mbid\": \"{0}\",", file.Tag.MusicBrainzTrackId) : "";
                         mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseId)) ? String.Format("\"release_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseId) : "";
                         mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseGroupId)) ? String.Format("\"release_group_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseGroupId) : "";
-                        mbidJson += (file.Tag.Track != 0) ? String.Format("\"trackNumber\": \"{0}\",", file.Tag.Track) : "";
+                        mbidJson += (file.Tag.Track != 0) ? String.Format("\"tracknumber\": \"{0}\",", file.Tag.Track) : "";
                     }
                 }
                 catch (Exception) // MBIDs are optional: a file TagLib# can't read (stream, unsupported format, missing file...) must not prevent the scrobble.
