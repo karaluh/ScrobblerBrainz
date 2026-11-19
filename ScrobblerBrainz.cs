@@ -196,6 +196,13 @@ namespace MusicBeePlugin
                 string mbidJson = "";
                 string[] trackArtistMbids = new string[0];
 
+                // ListenBrainz rejects the whole listen when an MBID isn't a valid UUID, so leave invalid ones out.
+                string MbidField(string key, string mbid)
+                {
+                    Guid guid;
+                    return Guid.TryParse(mbid, out guid) ? String.Format("\"{0}\": \"{1}\",", key, guid) : "";
+                }
+
                 try
                 {
                     using (var file = TagLib.File.Create(mbApiInterface.NowPlaying_GetFileUrl()))
@@ -230,16 +237,20 @@ namespace MusicBeePlugin
                             string trackArtistMbidJson = "\"artist_mbids\": [";
                             foreach (string mbid in trackArtistMbids)
                             {
-                                trackArtistMbidJson += "\"" + mbid.Trim() + "\",";
+                                Guid guid;
+                                if (Guid.TryParse(mbid, out guid))
+                                {
+                                    trackArtistMbidJson += "\"" + guid + "\",";
+                                }
                             }
                             trackArtistMbidJson = trackArtistMbidJson.TrimEnd(',');
                             trackArtistMbidJson += "], ";
                             mbidJson += trackArtistMbidJson;
                         }
 
-                        mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzTrackId)) ? String.Format("\"recording_mbid\": \"{0}\",", file.Tag.MusicBrainzTrackId) : "";
-                        mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseId)) ? String.Format("\"release_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseId) : "";
-                        mbidJson += (!String.IsNullOrEmpty(file.Tag.MusicBrainzReleaseGroupId)) ? String.Format("\"release_group_mbid\": \"{0}\",", file.Tag.MusicBrainzReleaseGroupId) : "";
+                        mbidJson += MbidField("recording_mbid", file.Tag.MusicBrainzTrackId);
+                        mbidJson += MbidField("release_mbid", file.Tag.MusicBrainzReleaseId);
+                        mbidJson += MbidField("release_group_mbid", file.Tag.MusicBrainzReleaseGroupId);
                         mbidJson += (file.Tag.Track != 0) ? String.Format("\"tracknumber\": \"{0}\",", file.Tag.Track) : "";
                     }
                 }
